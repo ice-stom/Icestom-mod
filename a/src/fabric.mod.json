@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "icestom_mod",
+	"version": "1.0.0",
+	"name": "IceStom Mod",
+	"description": "IceStom Mod",
+	"authors": [
+		"localhackerman"
+	],
+	"contact": {
+		"homepage": "https://icestom.gitlab.io/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/modid/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"io.gitlab.icestom.icestom_mod.IceStomMod"
+		],
+		"client": [
+			"io.gitlab.icestom.icestom_mod.client.IceStomModClient"
+		]
+	},
+	"mixins": [
+		"icestom_mod.mixins.json",
+		{
+			"config": "icestom_mod.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
