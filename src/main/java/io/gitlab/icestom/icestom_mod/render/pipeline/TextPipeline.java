@@ -8,23 +8,23 @@ import net.minecraft.client.renderer.MultiBufferSource;
 
 @Environment(EnvType.CLIENT)
 public abstract class TextPipeline<RenderState> extends IcestomRenderPipeline<RenderState> {
-   private MultiBufferSource.BufferSource bufferSource;
+    private MultiBufferSource.BufferSource bufferSource;
 
-   RenderPipeline getPipeline() {
-      return FilledThroughWallsPipeline.FILLED_THROUGH_WALLS;
-   }
+    RenderPipeline getPipeline() {
+        return FilledThroughWallsPipeline.FILLED_THROUGH_WALLS;
+    }
 
-   protected MultiBufferSource.BufferSource getTextBufferSource() {
-      if (this.bufferSource == null) {
-         this.bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-      }
+    protected MultiBufferSource.BufferSource getTextBufferSource() {
+        if (this.bufferSource == null) {
+            this.bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        }
 
-      return this.bufferSource;
-   }
+        return this.bufferSource;
+    }
 
-   protected void draw(Minecraft client, RenderPipeline pipeline) {
-      if (this.bufferSource != null) {
-         this.bufferSource.endBatch();
-      }
-   }
+    protected void draw(Minecraft client, RenderPipeline pipeline) {
+        if (this.bufferSource != null) {
+            this.bufferSource.endBatch();
+        }
+    }
 }

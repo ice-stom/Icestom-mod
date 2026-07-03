@@ -9,12 +9,12 @@ import net.minecraft.client.renderer.RenderPipelines;
 
 @Environment(EnvType.CLIENT)
 public abstract class FilledPipeline<RenderState> extends FilledThroughWallsPipeline<RenderState> {
-   private static final RenderPipeline FILLED = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
-           .withLocation(IceStomMod.id("pipeline/debug_filled_box_through_walls"))
-           .withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST)
-           .build());
+    private static final RenderPipeline FILLED = RenderPipelines
+            .register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+                    .withLocation(IceStomMod.id("pipeline/debug_filled_box_through_walls"))
+                    .withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST).build());
 
-   RenderPipeline getPipeline() {
-      return FILLED;
-   }
+    RenderPipeline getPipeline() {
+        return FILLED;
+    }
 }

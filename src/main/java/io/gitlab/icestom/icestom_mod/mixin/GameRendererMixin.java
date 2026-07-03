@@ -9,11 +9,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
-   @Inject(
-      method = "close",
-      at = @At("RETURN")
-   )
-   private void onGameRendererClose(CallbackInfo ci) {
-      IceStomModClient.getInstance().closePipelines();
-   }
+    @Inject(method = "close", at = @At("RETURN"))
+    private void onGameRendererClose(CallbackInfo ci) {
+        IceStomModClient.getInstance().closePipelines();
+    }
 }

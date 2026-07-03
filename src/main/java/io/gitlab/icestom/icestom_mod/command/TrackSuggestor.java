@@ -16,16 +16,17 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 @Environment(EnvType.CLIENT)
 public class TrackSuggestor implements SuggestionProvider<FabricClientCommandSource> {
 
-   @Override
-   public CompletableFuture<Suggestions> getSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-      TrackHandler trackHandler = IceStomModClient.getInstance().trackHandler;
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<FabricClientCommandSource> context,
+            SuggestionsBuilder builder) throws CommandSyntaxException {
+        TrackHandler trackHandler = IceStomModClient.getInstance().trackHandler;
 
-      for (Track track : trackHandler.getTracks()) {
-         if (track.getId().startsWith(builder.getRemainingLowerCase())) {
-            builder.suggest(track.getId());
-         }
-      }
+        for (Track track : trackHandler.getTracks()) {
+            if (track.getId().startsWith(builder.getRemainingLowerCase())) {
+                builder.suggest(track.getId());
+            }
+        }
 
-      return builder.buildFuture();
-   }
+        return builder.buildFuture();
+    }
 }

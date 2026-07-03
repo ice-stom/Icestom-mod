@@ -1,5 +1,11 @@
 package io.gitlab.icestom.icestom_mod.track;
 
+import io.gitlab.icestom.stomtrack.TrackFile;
+import io.gitlab.icestom.stomtrack.TrackLoader;
+import io.gitlab.icestom.stomtrack.impl.MutableTrackFile;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -10,49 +16,52 @@ import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class TrackHandler {
-   private @Nullable Track selectedTrack;
-   private final Map<String, Track> tracks = new HashMap<>();
+    private @Nullable Track selectedTrack;
+    private final Map<String, Track> tracks = new HashMap<>();
 
-   public void setSelectedTrack(@Nullable Track selectedTrack) {
-      Track old_selected = this.selectedTrack;
-      this.selectedTrack = selectedTrack;
-      if (old_selected != null) {
-         old_selected.updateRenderState();
-      }
+    public void setSelectedTrack(@Nullable Track selectedTrack) {
+        Track old_selected = this.selectedTrack;
+        this.selectedTrack = selectedTrack;
+        if (old_selected != null) {
+            old_selected.updateRenderState();
+        }
 
-      if (selectedTrack != null) {
-         selectedTrack.updateRenderState();
-      }
-   }
+        if (selectedTrack != null) {
+            selectedTrack.updateRenderState();
+        }
+    }
 
-   public @Nullable Track getSelectedTrack() {
-      return this.selectedTrack;
-   }
+    public @Nullable Track getSelectedTrack() {
+        return this.selectedTrack;
+    }
 
-   public List<Track> getTracks() {
-      return this.tracks.values().stream().toList();
-   }
+    public List<Track> getTracks() {
+        return this.tracks.values().stream().toList();
+    }
 
-   public void loadTrack(Track track) {
-      this.tracks.put(track.getId(), track);
-   }
+    public void loadTrack(Track track) {
+        this.tracks.put(track.getId(), track);
+    }
 
-   public @Nullable Track getTrack(String id) {
-      return this.tracks.get(id);
-   }
+    public @Nullable Track getTrack(String id) {
+        return this.tracks.get(id);
+    }
 
-   public void unloadAllTracks(Path data) {
-//      for(Track track : this.tracks.values()) {
-//         TrackData trackData = track.toTrackData();
-//
-//         try {
-//            Map<String, Object> map = trackData.serialize();
-//            tomlWriter.write(map, data.resolve(trackData.getId() + ".toml").toFile());
-//         } catch (IOException var6) {
-//         }
-//      }
+    public void unloadAllTracks(Path data) {
+        for (Track track : this.tracks.values()) {
+            TrackFile trackFile = track.toTrackFile();
 
-      this.setSelectedTrack((Track)null);
-      this.tracks.clear();
-   }
+            try {
+                try (OutputStream stream = new FileOutputStream(
+                        data.resolve(trackFile.getId() + ".track.xml").toFile())) {
+                    TrackLoader.saveTrack(stream, new MutableTrackFile(trackFile));
+                }
+
+            } catch (IOException _) {
+            }
+        }
+
+        this.setSelectedTrack(null);
+        this.tracks.clear();
+    }
 }

@@ -7,5 +7,5 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 @Environment(EnvType.CLIENT)
 public interface CommandProvider {
-   LiteralArgumentBuilder<FabricClientCommandSource> command();
+    LiteralArgumentBuilder<FabricClientCommandSource> command();
 }

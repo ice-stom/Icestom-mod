@@ -14,32 +14,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MouseHandler.class)
 public abstract class MouseMixin {
-   @Shadow
-   @Final
-   private Minecraft minecraft;
+    @Shadow
+    @Final
+    private Minecraft minecraft;
 
-   @Inject(
-      method = "onButton",
-      at = {@At("HEAD")},
-      cancellable = true
-   )
-   private void onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
+    @Inject(method = "onButton", at = {@At("HEAD")}, cancellable = true)
+    private void onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
 
-      if (this.minecraft.player == null) return;
+        if (this.minecraft.player == null)
+            return;
+        if (this.minecraft.screen != null)
+            return;
 
-      Vec3 origin = this.minecraft.player.getEyePosition(1.0F);
-      Vec3 direction = this.minecraft.player.getViewVector(1.0F);
+        Vec3 origin = this.minecraft.player.getEyePosition(1.0F);
+        Vec3 direction = this.minecraft.player.getViewVector(1.0F);
 
-      int gizmoButton = 0;
-      if (input.button() == gizmoButton) {
-         if (action == 1) {
-            if (IceStomModClient.getInstance().getGizmoHandler().mouseDown(origin, direction)) {
-               ci.cancel();
+        int gizmoButton = 0;
+        if (input.button() == gizmoButton) {
+            if (action == 1) {
+                if (IceStomModClient.getInstance().getGizmoHandler().mouseDown(origin, direction)) {
+                    ci.cancel();
+                }
+            } else if (action == 0 && IceStomModClient.getInstance().getGizmoHandler().mouseUp()) {
+                ci.cancel();
             }
-         } else if (action == 0 && IceStomModClient.getInstance().getGizmoHandler().mouseUp()) {
-            ci.cancel();
-         }
-      }
-
-   }
+        }
+    }
 }

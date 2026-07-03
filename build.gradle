@@ -14,7 +14,7 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	implementation 'io.gitlab.icestom:stomtrack:0.0.3'
+	implementation 'io.gitlab.icestom:stomtrack:0.0.5'
 
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 }
