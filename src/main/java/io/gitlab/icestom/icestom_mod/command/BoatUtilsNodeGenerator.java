@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.gitlab.icestom.stomtrack.shadow.io.github.openboatutils.protocol.channels.OBUSettingsPacket;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public interface BoatUtilsNodeGenerator {
 
     @FunctionalInterface
     interface PacketConsumer {
-        int consume(CommandContext<FabricClientCommandSource> context, OBUSettingsPacket packet);
+        int consume(CommandContext<FabricClientCommandSource> context, OBUSettingsPacket packet) throws CommandSyntaxException;
     }
 
     static LiteralArgumentBuilder<FabricClientCommandSource> getBoatUtilsNode(

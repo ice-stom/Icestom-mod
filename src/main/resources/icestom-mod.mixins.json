@@ -1,16 +1,18 @@
 {
-	"required": true,
-	"package": "io.gitlab.icestom.icestom_mod.mixin",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"GameRendererMixin",
-		"MouseMixin"
-	],
-	"mixins": [],
-	"injectors": {
-		"defaultRequire": 1
-	},
-	"overwrites": {
-		"requireAnnotations": true
+  "required": true,
+  "package": "io.gitlab.icestom.icestom_mod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EditWorldScreenMixin",
+    "GameRendererMixin",
+    "MouseMixin",
+    "ScrollWheelHandlerMixin"
+  ],
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
 	}
 }

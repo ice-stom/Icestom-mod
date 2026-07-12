@@ -2,10 +2,14 @@ package io.gitlab.icestom.icestom_mod.track;
 
 import io.gitlab.icestom.icestom_mod.GizmoHandler;
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
-import io.gitlab.icestom.icestom_mod.render.renderes.BoatLocationRenderer;
-import io.gitlab.icestom.icestom_mod.render.renderes.CuboidCheckpointRenderer;
-import io.gitlab.icestom.icestom_mod.render.renderes.LineCheckpointRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.BoatLocationRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.CuboidCheckpointRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.LineCheckpointRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.*;
+import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.CuboidCheckpoint;
+import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.LineCheckpoint;
+import io.gitlab.icestom.icestom_mod.track.feature.location.GridLocation;
+import io.gitlab.icestom.icestom_mod.track.feature.location.SpawnLocation;
 import io.gitlab.icestom.stomtrack.TrackCheckpoint;
 import io.gitlab.icestom.stomtrack.TrackFile;
 import io.gitlab.icestom.stomtrack.shadow.io.github.openboatutils.protocol.channels.OBUSettingsPacket;
@@ -13,10 +17,8 @@ import io.gitlab.icestom.stomtrack.shadow.net.kyori.adventure.text.Component;
 import io.gitlab.icestom.stomtrack.type.Location;
 import io.gitlab.icestom.stomtrack.type.Vec2;
 import io.gitlab.icestom.stomtrack.type.Vec3;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,18 +34,19 @@ public class Track {
     private static final Logger log = LoggerFactory.getLogger(Track.class);
 
     private final String id;
-    private final boolean looped = true;
+    private boolean looped;
+    private final Map<String, String> tags;
     private final List<TrackFeature> features = new ArrayList<>();
     private final List<OBUSettingsPacket> obuSettingsPackets;
 
-    public Track(String id, Location spawnLocation, List<OBUSettingsPacket> obuSettingsPackets) {
+    public Track(String id, Location spawnLocation, boolean looped, Map<String, String> tags, List<OBUSettingsPacket> obuSettingsPackets) {
         this.id = id;
+        this.looped = looped;
+        this.tags = new HashMap<>(tags);
         this.obuSettingsPackets = new ArrayList<>(obuSettingsPackets);
 
         addFeature(new SpawnLocation(spawnLocation.x(), spawnLocation.y(), spawnLocation.z(),
                 (float) Math.toRadians(spawnLocation.yaw())));
-
-        this.updateRenderState();
     }
 
     public void addFeature(TrackFeature feature) {
@@ -117,14 +120,26 @@ public class Track {
         return obuSettingsPackets;
     }
 
+    public Map<String, String> getTags() {
+        return tags;
+    }
+
+    public boolean isLooped() {
+        return looped;
+    }
+
     public static Track fromTrackData(TrackFile trackData) {
-        Track track = new Track(trackData.getId(), trackData.getSpawnLocation(),
+        Track track = new Track(
+                trackData.getId(),
+                trackData.getSpawnLocation(),
+                trackData.isLooped(),
+                trackData.getTags(),
                 new ArrayList<>(trackData.getOpenBoatUtils()));
         int gridIndex = 0;
 
         for (Location gridLocation : trackData.getGrid()) {
             track.addFeature(new GridLocation(gridLocation.x(), gridLocation.y(), gridLocation.z(),
-                    (float) ((int) Math.toRadians(gridLocation.yaw())), gridIndex++));
+                    (float) (Math.toRadians(gridLocation.yaw())), gridIndex++));
         }
 
         trackData.getCheckpoints().forEach((trackCheckpoint, index) -> {
@@ -141,6 +156,14 @@ public class Track {
 
     public String getId() {
         return this.id;
+    }
+
+    public int getMaxIndexOfFeature(Class<? extends IndexedFeature> superclass, int fallback) {
+        return features.stream()
+                .filter(trackFeature -> superclass.isAssignableFrom(trackFeature.getClass()))
+                .map(trackFeature -> ((IndexedFeature) trackFeature).getIndex())
+                .max(Integer::compareTo)
+                .orElse(fallback);
     }
 
     public TrackFile toTrackFile() {
@@ -173,6 +196,7 @@ public class Track {
 
         final Location finalSpawnLocation = spawnLocation;
         return new TrackFile() {
+
             @Override
             public @NotNull String getId() {
                 return id;
@@ -192,6 +216,9 @@ public class Track {
             public @NotNull Location getSpawnLocation() {
                 return finalSpawnLocation;
             }
+
+            @Override
+            public @NotNull Map<String, String> getTags() { return tags; }
 
             @Override
             public @NotNull Map<TrackCheckpoint, Integer> getCheckpoints() {

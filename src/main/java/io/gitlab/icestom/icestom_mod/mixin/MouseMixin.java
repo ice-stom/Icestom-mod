@@ -1,10 +1,13 @@
 package io.gitlab.icestom.icestom_mod.mixin;
 
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
+import io.gitlab.icestom.icestom_mod.render.hud.editor.EditorTool;
+import io.gitlab.icestom.icestom_mod.render.hud.editor.TrackEditor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.world.phys.Vec3;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,6 +21,8 @@ public abstract class MouseMixin {
     @Final
     private Minecraft minecraft;
 
+    // TODO: UNFUCK THIS!!!!
+
     @Inject(method = "onButton", at = {@At("HEAD")}, cancellable = true)
     private void onMouseButton(long window, MouseButtonInfo input, int action, CallbackInfo ci) {
 
@@ -29,14 +34,30 @@ public abstract class MouseMixin {
         Vec3 origin = this.minecraft.player.getEyePosition(1.0F);
         Vec3 direction = this.minecraft.player.getViewVector(1.0F);
 
+        TrackEditor trackEditor = IceStomModClient.getInstance().trackEditor;
+
         int gizmoButton = 0;
         if (input.button() == gizmoButton) {
-            if (action == 1) {
-                if (IceStomModClient.getInstance().getGizmoHandler().mouseDown(origin, direction)) {
-                    ci.cancel();
+            if (trackEditor.isFocused()) {
+                EditorTool tool = trackEditor.getEditorTool();
+
+                if (action == GLFW.GLFW_PRESS) {
+                    if (tool.mouseDown()) {
+                        ci.cancel();
+                        return;
+                    }
+                } else if (action == GLFW.GLFW_RELEASE) {
+                    if (tool.mouseUp()) {
+                        ci.cancel();
+                        return;
+                    }
                 }
-            } else if (action == 0 && IceStomModClient.getInstance().getGizmoHandler().mouseUp()) {
-                ci.cancel();
+            }
+
+            if (action == GLFW.GLFW_PRESS) {
+                if (IceStomModClient.getInstance().getGizmoHandler().mouseDown(origin, direction)) ci.cancel();
+            } else if (action == GLFW.GLFW_RELEASE) {
+                if (IceStomModClient.getInstance().getGizmoHandler().mouseUp()) ci.cancel();
             }
         }
     }

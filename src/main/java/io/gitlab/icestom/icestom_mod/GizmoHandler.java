@@ -1,6 +1,6 @@
 package io.gitlab.icestom.icestom_mod;
 
-import io.gitlab.icestom.icestom_mod.render.renderes.GizmoRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.GizmoRenderer;
 import io.gitlab.icestom.icestom_mod.track.Track;
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -4,12 +4,12 @@ import io.gitlab.icestom.icestom_mod.GizmoHandler;
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.LineCheckpoint;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
-@Environment(EnvType.CLIENT)
-public abstract sealed class TrackFeature implements AutoCloseable
-        permits CuboidCheckpoint, GridLocation, LineCheckpoint, SpawnLocation {
+public abstract class TrackFeature implements AutoCloseable {
 
     private final GizmoHandler gizmoHandler = IceStomModClient.getInstance().getGizmoHandler();
     private final List<GizmoHandler.Gizmo> gizmos = new ArrayList<>();
