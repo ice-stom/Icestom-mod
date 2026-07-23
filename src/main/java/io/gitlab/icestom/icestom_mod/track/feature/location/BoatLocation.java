@@ -77,5 +77,10 @@ public abstract class BoatLocation<RenderState extends BoatLocationRenderer.Boat
         return new Vec3(x, y, z);
     }
 
-    public interface BoatLocationRenderState extends BoatLocationRenderer.BoatLocationRenderable, FeatureLabelRenderer.FeatureRenderable {}
+    public interface BoatLocationRenderState extends BoatLocationRenderer.BoatLocationRenderable, FeatureLabelRenderer.FeatureRenderable {
+        @Override
+        default float labelHeight() {
+            return 2f;
+        }
+    }
 }

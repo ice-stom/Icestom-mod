@@ -36,29 +36,23 @@ public abstract class TrackFeature<RenderState extends FeatureLabelRenderer.Feat
                 globalIndex,
                 root.x,
                 root.y,
-                root.z
+                root.z,
+                2f
         );
     }
 
     public abstract void onGizmoMoved(GizmoHandler.Gizmo var1);
 
     public abstract Vec3 getRootPosition();
-    public float getLabelHeight() { return 2f; }
 
-    public interface FeatureRenderState extends FeatureLabelRenderer.FeatureRenderable {
-        String type();
-        String label();
-        int globalIndex();
-        double x();
-        double y();
-        double z();
-    }
+    public interface FeatureRenderState extends FeatureLabelRenderer.FeatureRenderable {}
 
     public record FeatureRenderStateImpl(
             int globalIndex,
             double x,
             double y,
-            double z
+            double z,
+            float labelHeight
     ) implements FeatureRenderState {
 
         @Override

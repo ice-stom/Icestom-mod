@@ -10,7 +10,7 @@ public class FeatureLabelRenderer extends BillboardTextPipeline<FeatureLabelRend
 
     @Override
     protected float getTextScale() {
-        return 0.025f;
+        return 0.05f;
     }
 
     public interface FeatureRenderable extends BillboardTextRenderable<FeatureRenderable> {
@@ -26,6 +26,12 @@ public class FeatureLabelRenderer extends BillboardTextPipeline<FeatureLabelRend
         double x();
         double y();
         double z();
+        float labelHeight();
+
+        @Override
+        default float yOffset() {
+            return labelHeight();
+        }
 
         @Override
         default void draw(FeatureRenderable feature, Matrix4f textMatrix, MultiBufferSource.BufferSource bufferSource) {

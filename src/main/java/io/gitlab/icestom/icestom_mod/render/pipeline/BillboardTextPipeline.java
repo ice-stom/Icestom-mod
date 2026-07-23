@@ -37,8 +37,16 @@ public abstract class BillboardTextPipeline<RenderState extends BillboardTextPip
 
             float scale = getTextScale();
 
+            matrices.translate(
+                    state.xOffset(),
+                    state.yOffset(),
+                    state.zOffset()
+            );
+
             matrices.mulPose(billboard);
             matrices.scale(-scale, -scale, scale);
+
+
 
             Matrix4f textMatrix = matrices.last().pose();
 
@@ -54,6 +62,11 @@ public abstract class BillboardTextPipeline<RenderState extends BillboardTextPip
         double x();
         double y();
         double z();
+
+        default float xOffset() { return 0; }
+        default float yOffset() { return 0; }
+        default float zOffset() { return 0; }
+
         void draw(T feature, Matrix4f textMatrix, MultiBufferSource.BufferSource bufferSource);
 
         static void drawCenteredText(String text, int x, int y, int c, Matrix4f textMatrix, MultiBufferSource.BufferSource bufferSource) {

@@ -87,5 +87,10 @@ public abstract class Line<RenderState extends LineFeatureRenderer.LineRenderabl
         default double z() {
             return (z1() + z2()) / 2;
         }
+
+        @Override
+        default float labelHeight() {
+            return (float) (height() / 2) + 1;
+        }
     }
 }

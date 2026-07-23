@@ -86,6 +86,8 @@ public class GizmoRenderer extends FilledThroughWallsPipeline<GizmoRenderer.Gizm
         PoseStack matrices = context.matrices();
         Vec3 camera = context.worldState().cameraRenderState.pos;
 
+        boolean draw = false;
+
         for (GizmoRenderState gizmo : gizmos) {
             boolean unfocused = this.focused && !gizmo.selected;
             if (!gizmo.hidden) {
@@ -111,11 +113,13 @@ public class GizmoRenderer extends FilledThroughWallsPipeline<GizmoRenderer.Gizm
                     RenderUtil.renderFilledBox(matrix, buffer, -0.1F, -0.1F, -0.1F, 0.1F, 0.1F, 0.1F, 1.0F, 1.0F,
                             1.0F, unfocused ? 0.15F : 1.0F);
                     matrices.popPose();
+
+                    draw = true;
                 }
             }
         }
 
-        return true;
+        return draw;
     }
 
     @Environment(EnvType.CLIENT)

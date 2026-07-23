@@ -87,5 +87,10 @@ public abstract class Cuboid<RenderState extends CuboidFeatureRenderer.CuboidRen
         default double z() {
             return (z1() + z2()) / 2;
         };
+
+        @Override
+        default float labelHeight() {
+            return (float) (y2() - y1()) / 2 + 1;
+        }
     }
 }
