@@ -1,10 +1,11 @@
 package io.gitlab.icestom.icestom_mod.track.feature.trigger;
 
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.LineFeatureRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.generic.Line;
 
 import java.util.Set;
 
-public class LineTrigger extends Line implements TrackTrigger {
+public class LineTrigger extends Line<LineFeatureRenderer.LineRenderable> implements TrackTrigger {
 
     private Set<String> tags;
 

@@ -1,9 +1,12 @@
 package io.gitlab.icestom.icestom_mod.track.feature.generic;
 
 import io.gitlab.icestom.icestom_mod.GizmoHandler;
+import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.LineFeatureRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.TrackFeature;
+import net.minecraft.world.phys.Vec3;
 
-public abstract class Line extends TrackFeature {
+public abstract class Line<RenderState extends LineFeatureRenderer.LineRenderable & FeatureLabelRenderer.FeatureRenderable> extends TrackFeature<RenderState> {
     private final GizmoHandler.Gizmo left;
     private final GizmoHandler.Gizmo right;
     private final GizmoHandler.Gizmo height;
@@ -61,5 +64,28 @@ public abstract class Line extends TrackFeature {
         this.z2 = this.right.getZ();
         this.y = Math.min(this.left.getY(), this.right.getY());
         this.halfHeight = this.height.getY() - this.y;
+    }
+
+    @Override
+    public Vec3 getRootPosition() {
+        return new Vec3((x1 + x2) / 2, y, (z1 + z2) / 2);
+    }
+
+    public interface LineRenderState extends LineFeatureRenderer.LineRenderable, FeatureLabelRenderer.FeatureRenderable {
+
+        double x1();
+        double x2();
+        double z1();
+        double z2();
+
+        @Override
+        default double x() {
+            return (x1() + x2()) / 2;
+        }
+
+        @Override
+        default double z() {
+            return (z1() + z2()) / 2;
+        }
     }
 }

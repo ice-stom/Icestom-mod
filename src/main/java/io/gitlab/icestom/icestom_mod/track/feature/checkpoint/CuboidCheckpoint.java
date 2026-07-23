@@ -1,13 +1,10 @@
 package io.gitlab.icestom.icestom_mod.track.feature.checkpoint;
 
-import io.gitlab.icestom.icestom_mod.GizmoHandler;
-import io.gitlab.icestom.icestom_mod.render.renderers.CuboidCheckpointRenderer;
-import io.gitlab.icestom.icestom_mod.track.feature.TrackFeature;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.CuboidFeatureRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.generic.Cuboid;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import io.gitlab.icestom.stomtrack.type.Vec3;
 
-public class CuboidCheckpoint extends Cuboid implements TrackCheckpoint {
+public class CuboidCheckpoint extends Cuboid<Cuboid.CuboidRenderState> implements TrackCheckpoint<io.gitlab.icestom.stomtrack.TrackCheckpoint.CuboidCheckpoint> {
 
     private int index;
 
@@ -16,15 +13,48 @@ public class CuboidCheckpoint extends Cuboid implements TrackCheckpoint {
         this.index = index;
     }
 
-    public CuboidCheckpointRenderer.CuboidCheckpointRenderState renderState() {
-        return new CuboidCheckpointRenderer.CuboidCheckpointRenderState(this.x1, this.y1, this.z1, this.x2, this.y2,
-                this.z2, this.index);
-    }
-
     @Override public int getIndex() {
         return this.index;
     }
     @Override public void setIndex(int index) {
         this.index = index;
+    }
+
+    @Override
+    public io.gitlab.icestom.stomtrack.TrackCheckpoint.CuboidCheckpoint toEncoded() {
+        return new io.gitlab.icestom.stomtrack.TrackCheckpoint.CuboidCheckpoint(
+                new Vec3(x1, y1, z1),
+                new Vec3(x2, y2, z2)
+        );
+    }
+
+    @Override
+    public CuboidRenderState getRenderState(int globalIndex) {
+        return new CuboidCheckpointRenderState(
+                x1,
+                y1,
+                z1,
+                x2,
+                y2,
+                z2,
+                index,
+                globalIndex
+        );
+    }
+
+    public record CuboidCheckpointRenderState(
+            double x1,
+            double y1,
+            double z1,
+            double x2,
+            double y2,
+            double z2,
+            int index,
+            int globalIndex
+    ) implements CuboidRenderState {
+        @Override
+        public String label() {
+            return String.valueOf(index);
+        }
     }
 }

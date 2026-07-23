@@ -1,10 +1,7 @@
 package io.gitlab.icestom.icestom_mod.track.feature.region;
 
-import io.gitlab.icestom.icestom_mod.render.renderers.CuboidCheckpointRenderer;
-import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.TrackCheckpoint;
 import io.gitlab.icestom.icestom_mod.track.feature.generic.Cuboid;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class CuboidRegion extends Cuboid implements TrackRegion {
@@ -17,5 +14,4 @@ public class CuboidRegion extends Cuboid implements TrackRegion {
     }
 
     @Override public Set<String> getTags() { return tags; }
-    @Override public void setTags(Set<String> tags) { this.tags = tags; }
 }

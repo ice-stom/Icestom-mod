@@ -27,6 +27,7 @@ import io.gitlab.icestom.stomtrack.shadow.io.github.openboatutils.protocol.chann
 import io.gitlab.icestom.stomtrack.type.Location;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -120,6 +121,11 @@ public class TrackEditCommand implements CommandNodeProvider {
 //                }));
     }
 
+    private int doTrackInfo(CommandContext<FabricClientCommandSource> context) {
+        context.getSource().sendFeedback(Component.literal("i can't be asked to implement this yet"));
+        return 0;
+    }
+
     private int doRegionCuboid(CommandContext<FabricClientCommandSource> context) {
         return 0;
     }
@@ -144,77 +150,6 @@ public class TrackEditCommand implements CommandNodeProvider {
         if (!track.getTags().containsKey(tag)) throw NO_TRACK_TAG.create();
 
         track.getTags().remove(tag);
-
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private int doTrackInfo(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        Track track = activeTrack();
-
-        FabricClientCommandSource source = context.getSource();
-        List<TrackFeature> features = track.getFeatures();
-
-        source.sendFeedback(Component.literal("Track: ")
-                .withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(track.getId()).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)));
-        source.sendFeedback(Component.literal("Looped: " + track.isLooped() + "  Features: " + features.size())
-                .withStyle(ChatFormatting.GRAY));
-
-        Map<String, List<MutableComponent>> sections = new LinkedHashMap<>();
-        sections.put("Spawn Location", new ArrayList<>());
-        sections.put("Grid Locations", new ArrayList<>());
-        sections.put("Line Checkpoints", new ArrayList<>());
-        sections.put("Cuboid Checkpoints", new ArrayList<>());
-
-        for (int internalId = 0; internalId < features.size(); internalId++) {
-            TrackFeature feature = features.get(internalId);
-            String title = switch (feature) {
-                case SpawnLocation _ -> "Spawn Location";
-                case GridLocation _ -> "Grid Locations";
-                case LineCheckpoint _ -> "Line Checkpoints";
-                case CuboidCheckpoint _ -> "Cuboid Checkpoints";
-            };
-
-            int finalInternalId = internalId;
-            sections.get(title).add((switch (feature) {
-                case SpawnLocation spawn -> Component.literal(String.format(
-                                " - x=%.2f y=%.2f z=%.2f yaw=%.1f°",
-                                spawn.getX(), spawn.getY(), spawn.getZ(), Math.toDegrees(spawn.getR())))
-                        .withStyle(ChatFormatting.WHITE);
-
-                case GridLocation grid -> Component.literal(String.format(
-                                " - #%d  x=%.2f y=%.2f z=%.2f yaw=%.1f°",
-                                grid.getIndex(), grid.getX(), grid.getY(), grid.getZ(), Math.toDegrees(grid.getR())))
-                        .withStyle(ChatFormatting.AQUA);
-
-                case LineCheckpoint checkpoint -> Component.literal(String.format(
-                                " - #%d  (%.2f, %.2f) -> (%.2f, %.2f)  y=%.2f h=%.2f",
-                                checkpoint.getIndex(), checkpoint.getX1(), checkpoint.getZ1(),
-                                checkpoint.getX2(), checkpoint.getZ2(), checkpoint.getY(), checkpoint.getHalfHeight() * 2))
-                        .withStyle(ChatFormatting.GREEN);
-
-                case CuboidCheckpoint checkpoint -> Component.literal(String.format(
-                                " - #%d  min=(%.2f, %.2f, %.2f)  max=(%.2f, %.2f, %.2f)",
-                                checkpoint.getIndex(), checkpoint.getX1(), checkpoint.getY1(), checkpoint.getZ1(),
-                                checkpoint.getX2(), checkpoint.getY2(), checkpoint.getZ2()))
-                        .withStyle(ChatFormatting.LIGHT_PURPLE);
-            }).withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(
-                    Component.literal("ID: " + finalInternalId).withStyle(ChatFormatting.DARK_GRAY))
-            )));
-        }
-
-        for (Map.Entry<String, List<MutableComponent>> section : sections.entrySet()) {
-            List<MutableComponent> lines = section.getValue();
-            if (lines.isEmpty()) continue;
-
-            source.sendFeedback(Component.literal(""));
-            source.sendFeedback(Component.literal(section.getKey() + " (" + lines.size() + ")")
-                    .withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE));
-
-            for (MutableComponent line : lines) {
-                source.sendFeedback(line);
-            }
-        }
 
         return Command.SINGLE_SUCCESS;
     }
@@ -283,10 +218,10 @@ public class TrackEditCommand implements CommandNodeProvider {
                                 ? "[]"
                                 : list.stream().map(String::valueOf).collect(Collectors.joining(", "));
                     } else if (value.getClass().isArray()) {
-                        int length = java.lang.reflect.Array.getLength(value);
+                        int length = Array.getLength(value);
                         List<String> parts = new ArrayList<>(length);
                         for (int i = 0; i < length; i++) {
-                            parts.add(String.valueOf(java.lang.reflect.Array.get(value, i)));
+                            parts.add(String.valueOf(Array.get(value, i)));
                         }
                         valueStr = parts.isEmpty() ? "[]" : String.join(", ", parts);
                     } else {

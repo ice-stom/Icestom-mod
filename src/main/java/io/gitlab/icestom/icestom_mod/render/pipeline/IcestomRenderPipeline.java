@@ -9,6 +9,8 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexFormat;
+
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import net.fabricmc.api.EnvType;
@@ -30,7 +32,7 @@ public abstract class IcestomRenderPipeline<RenderState> {
     private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
     protected MappableRingBuffer vertexBuffer;
     private BufferBuilder buffer;
-    private RenderState renderState;
+    private List<RenderState> renderState;
 
     protected @NotNull BufferBuilder getBuffer(RenderPipeline pipeline) {
         if (this.buffer == null) {
@@ -47,8 +49,9 @@ public abstract class IcestomRenderPipeline<RenderState> {
     abstract RenderPipeline getPipeline();
 
     public void extractAndDraw(WorldRenderContext context) {
-        if (this.getRenderState() != null) {
-            if (this.extract(context, this.getPipeline())) {
+        @Nullable List<RenderState> renderStates = getRenderState();
+        if (renderStates != null && !renderStates.isEmpty()) {
+            if (this.extract(context, this.getPipeline(), renderStates)) {
                 this.draw(Minecraft.getInstance(), this.getPipeline());
             }
         }
@@ -62,15 +65,15 @@ public abstract class IcestomRenderPipeline<RenderState> {
         }
     }
 
-    protected abstract boolean extract(WorldRenderContext var1, RenderPipeline var2);
+    protected abstract boolean extract(WorldRenderContext var1, RenderPipeline var2, @NotNull List<RenderState> renderStates);
 
     protected abstract void draw(Minecraft minecraft, RenderPipeline pipeline);
 
-    public void setRenderState(RenderState renderState) {
+    public void setRenderState(List<RenderState> renderState) {
         this.renderState = renderState;
     }
 
-    public @Nullable RenderState getRenderState() {
+    public @Nullable List<RenderState> getRenderState() {
         return this.renderState;
     }
 

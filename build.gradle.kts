@@ -28,16 +28,23 @@ dependencies {
 	runtimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
 }
 
-tasks.processResources {
-	val version = project.version
-	inputs.property("version", version)
-	filesMatching("fabric.mod.json") {
-		expand("version" to version)
+tasks {
+	java {
+		sourceCompatibility = JavaVersion.VERSION_25
+		targetCompatibility = JavaVersion.VERSION_21
 	}
 
-	dependsOn(":export-worker:shadowJar")
-	from(project(":export-worker").tasks.named("shadowJar").map { it.outputs.files.singleFile }) {
-		into("/")
+	processResources {
+		val version = project.version
+		inputs.property("version", version)
+		filesMatching("fabric.mod.json") {
+			expand("version" to version)
+		}
+
+		dependsOn(":export-worker:shadowJar")
+		from(project(":export-worker").tasks.named("shadowJar").map { it.outputs.files.singleFile }) {
+			into("/")
+		}
 	}
 }
 
@@ -47,7 +54,7 @@ tasks.withType<JavaCompile>().configureEach {
 
 java {
 	withSourcesJar()
-	sourceCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_21
 }
 

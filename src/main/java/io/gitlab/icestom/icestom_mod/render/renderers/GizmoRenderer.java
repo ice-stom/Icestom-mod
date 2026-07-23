@@ -10,10 +10,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4fc;
 
 @Environment(EnvType.CLIENT)
-public class GizmoRenderer extends FilledThroughWallsPipeline<List<GizmoRenderer.GizmoRenderState>> {
+public class GizmoRenderer extends FilledThroughWallsPipeline<GizmoRenderer.GizmoRenderState> {
     private static final float SHAFT_LENGTH = 0.9F;
     private static final float SHAFT_THICKNESS = 0.04F;
     private static final float HEAD_LENGTH = 0.2F;
@@ -40,50 +41,6 @@ public class GizmoRenderer extends FilledThroughWallsPipeline<List<GizmoRenderer
 
     public void setFocusedZ(boolean focusedZ) {
         this.focusedZ = focusedZ;
-    }
-
-    protected boolean extract(WorldRenderContext context, RenderPipeline pipeline) {
-        List<GizmoRenderState> gizmos = this.getRenderState();
-        if (gizmos.isEmpty()) {
-            return false;
-        } else {
-            BufferBuilder buffer = this.getBuffer(pipeline);
-            PoseStack matrices = context.matrices();
-            Vec3 camera = context.worldState().cameraRenderState.pos;
-            boolean drawn = false;
-
-            for (GizmoRenderState gizmo : gizmos) {
-                boolean unfocused = this.focused && !gizmo.selected;
-                if (!gizmo.hidden) {
-                    double dx = gizmo.x() - camera.x;
-                    double dy = gizmo.y() - camera.y;
-                    double dz = gizmo.z() - camera.z;
-                    if (!(dx * dx + dy * dy + dz * dz > (double) (gizmo.draw_distance * gizmo.draw_distance))) {
-                        matrices.pushPose();
-                        matrices.translate(gizmo.x() - camera.x, gizmo.y() - camera.y, gizmo.z() - camera.z);
-                        matrices.scale(gizmo.scale, gizmo.scale, gizmo.scale);
-                        Matrix4fc matrix = matrices.last().pose();
-                        float alpha = !this.focusedX && !this.focusedY && !this.focusedZ ? 1.0F : 0.3F;
-                        if (unfocused) {
-                            alpha = 0.15F;
-                        }
-
-                        this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.X, 1.0F, 0.2F, 0.2F,
-                                this.focusedX && !unfocused ? 1.0F : alpha);
-                        this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.Y, 0.2F, 1.0F, 0.2F,
-                                this.focusedY && !unfocused ? 1.0F : alpha);
-                        this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.Z, 0.2F, 0.2F, 1.0F,
-                                this.focusedZ && !unfocused ? 1.0F : alpha);
-                        RenderUtil.renderFilledBox(matrix, buffer, -0.1F, -0.1F, -0.1F, 0.1F, 0.1F, 0.1F, 1.0F, 1.0F,
-                                1.0F, unfocused ? 0.15F : 1.0F);
-                        drawn = true;
-                        matrices.popPose();
-                    }
-                }
-            }
-
-            return drawn;
-        }
     }
 
     private void renderAxis(Matrix4fc positionMatrix, BufferBuilder buffer, GizmoAxis axis, float red, float green,
@@ -121,6 +78,44 @@ public class GizmoRenderer extends FilledThroughWallsPipeline<List<GizmoRenderer
                         green, blue, alpha);
             }
         }
+    }
+
+    @Override
+    protected boolean extract(WorldRenderContext context, RenderPipeline pipeline, @NotNull List<GizmoRenderState> gizmos) {
+        BufferBuilder buffer = this.getBuffer(pipeline);
+        PoseStack matrices = context.matrices();
+        Vec3 camera = context.worldState().cameraRenderState.pos;
+
+        for (GizmoRenderState gizmo : gizmos) {
+            boolean unfocused = this.focused && !gizmo.selected;
+            if (!gizmo.hidden) {
+                double dx = gizmo.x() - camera.x;
+                double dy = gizmo.y() - camera.y;
+                double dz = gizmo.z() - camera.z;
+                if (!(dx * dx + dy * dy + dz * dz > (double) (gizmo.draw_distance * gizmo.draw_distance))) {
+                    matrices.pushPose();
+                    matrices.translate(gizmo.x() - camera.x, gizmo.y() - camera.y, gizmo.z() - camera.z);
+                    matrices.scale(gizmo.scale, gizmo.scale, gizmo.scale);
+                    Matrix4fc matrix = matrices.last().pose();
+                    float alpha = !this.focusedX && !this.focusedY && !this.focusedZ ? 1.0F : 0.3F;
+                    if (unfocused) {
+                        alpha = 0.15F;
+                    }
+
+                    this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.X, 1.0F, 0.2F, 0.2F,
+                            this.focusedX && !unfocused ? 1.0F : alpha);
+                    this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.Y, 0.2F, 1.0F, 0.2F,
+                            this.focusedY && !unfocused ? 1.0F : alpha);
+                    this.renderAxis(matrix, buffer, GizmoRenderer.GizmoAxis.Z, 0.2F, 0.2F, 1.0F,
+                            this.focusedZ && !unfocused ? 1.0F : alpha);
+                    RenderUtil.renderFilledBox(matrix, buffer, -0.1F, -0.1F, -0.1F, 0.1F, 0.1F, 0.1F, 1.0F, 1.0F,
+                            1.0F, unfocused ? 0.15F : 1.0F);
+                    matrices.popPose();
+                }
+            }
+        }
+
+        return true;
     }
 
     @Environment(EnvType.CLIENT)

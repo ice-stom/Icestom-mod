@@ -2,9 +2,10 @@ package io.gitlab.icestom.icestom_mod.track;
 
 import io.gitlab.icestom.icestom_mod.GizmoHandler;
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
-import io.gitlab.icestom.icestom_mod.render.renderers.BoatLocationRenderer;
-import io.gitlab.icestom.icestom_mod.render.renderers.CuboidCheckpointRenderer;
-import io.gitlab.icestom.icestom_mod.render.renderers.LineCheckpointRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.BoatLocationRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.CuboidFeatureRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.LineFeatureRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.*;
 import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.CuboidCheckpoint;
 import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.LineCheckpoint;
@@ -15,28 +16,25 @@ import io.gitlab.icestom.stomtrack.TrackFile;
 import io.gitlab.icestom.stomtrack.shadow.io.github.openboatutils.protocol.channels.OBUSettingsPacket;
 import io.gitlab.icestom.stomtrack.shadow.net.kyori.adventure.text.Component;
 import io.gitlab.icestom.stomtrack.type.Location;
-import io.gitlab.icestom.stomtrack.type.Vec2;
-import io.gitlab.icestom.stomtrack.type.Vec3;
 
 import java.util.*;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Track {
-    private static final List<LineCheckpointRenderer.LineCheckpointRenderState> lineCheckpointRenderState = new ArrayList<>();
-    private static final List<CuboidCheckpointRenderer.CuboidCheckpointRenderState> cuboidCheckpointRenderState = new ArrayList<>();
-    private static final List<BoatLocationRenderer.BoatLocationRenderState> gridLocationRenderState = new ArrayList<>();
-    private static final List<BoatLocationRenderer.BoatLocationRenderState> spawnLocationRenderState = new ArrayList<>();
+
+    private final TrackRenderStateProvider renderState = new TrackRenderStateProvider();
 
     private static final Logger log = LoggerFactory.getLogger(Track.class);
 
     private final String id;
     private boolean looped;
     private final Map<String, String> tags;
-    private final List<TrackFeature> features = new ArrayList<>();
+    private final List<TrackFeature<?>> features = new ArrayList<>();
     private final List<OBUSettingsPacket> obuSettingsPackets;
 
     public Track(String id, Location spawnLocation, boolean looped, Map<String, String> tags, List<OBUSettingsPacket> obuSettingsPackets) {
@@ -49,7 +47,7 @@ public class Track {
                 (float) Math.toRadians(spawnLocation.yaw())));
     }
 
-    public void addFeature(TrackFeature feature) {
+    public void addFeature(TrackFeature<?> feature) {
         this.features.add(feature);
 
         feature.onGizmoMoved(this.getGizmos().findFirst().get());
@@ -57,7 +55,7 @@ public class Track {
         this.updateRenderState();
     }
 
-    public @Nullable TrackFeature removeFeature(TrackFeature feature) {
+    public @Nullable TrackFeature<?> removeFeature(TrackFeature<?> feature) {
         if (feature == null)
             return null;
 
@@ -70,13 +68,6 @@ public class Track {
     }
 
     public void updateRenderState() {
-        IceStomModClient.getInstance().lineCheckpointRenderer.setRenderState(lineCheckpointRenderState);
-        IceStomModClient.getInstance().lineCheckpointTextRenderer.setRenderState(lineCheckpointRenderState);
-        IceStomModClient.getInstance().cuboidCheckpointRenderer.setRenderState(cuboidCheckpointRenderState);
-        IceStomModClient.getInstance().cuboidCheckpointTextRenderer.setRenderState(cuboidCheckpointRenderState);
-        IceStomModClient.getInstance().gridRenderer.setRenderState(gridLocationRenderState);
-        IceStomModClient.getInstance().gridTextRenderer.setRenderState(gridLocationRenderState);
-        IceStomModClient.getInstance().spawnLocationRenderer.setRenderState(spawnLocationRenderState);
 
         this.getFeatures().forEach((trackFeature) -> {
             for (GizmoHandler.Gizmo gizmo : trackFeature.getGizmos()) {
@@ -84,10 +75,6 @@ public class Track {
             }
         });
 
-        lineCheckpointRenderState.clear();
-        cuboidCheckpointRenderState.clear();
-        gridLocationRenderState.clear();
-        spawnLocationRenderState.clear();
 
         boolean active = this == IceStomModClient.getInstance().trackHandler.getSelectedTrack();
 
@@ -95,15 +82,26 @@ public class Track {
 
         IceStomModClient.getInstance().gizmoHandler.updateRenderState();
 
-        for (TrackFeature feature : this.features) {
-            if (feature instanceof LineCheckpoint lineCheckpoint) {
-                lineCheckpointRenderState.add(lineCheckpoint.renderState());
-            } else if (feature instanceof CuboidCheckpoint cuboidCheckpoint) {
-                cuboidCheckpointRenderState.add(cuboidCheckpoint.renderState());
-            } else if (feature instanceof GridLocation gridLocation) {
-                gridLocationRenderState.add(gridLocation.renderState());
-            } else if (feature instanceof SpawnLocation spawn) {
-                spawnLocationRenderState.add(spawn.renderState());
+        renderState.apply();
+        renderState.clear();
+
+        int index = 0;
+        for (TrackFeature<?> feature : this.features) {
+
+            FeatureLabelRenderer.FeatureRenderable renderState = feature.getRenderState(index++);
+
+            this.renderState.featureRenderable.add(renderState);
+
+            if (renderState instanceof CuboidFeatureRenderer.CuboidRenderable cuboidRenderable) {
+                this.renderState.cuboidRenderables.add(cuboidRenderable);
+            }
+
+            if (renderState instanceof LineFeatureRenderer.LineRenderable lineRenderable) {
+                this.renderState.lineRenderables.add(lineRenderable);
+            }
+
+            if (renderState instanceof BoatLocationRenderer.BoatLocationRenderable boatLocationRenderable) {
+                this.renderState.boatLocationRenderables.add(boatLocationRenderable);
             }
         }
     }
@@ -112,7 +110,7 @@ public class Track {
         return this.features.stream().flatMap((feature) -> feature.getGizmos().stream());
     }
 
-    public List<TrackFeature> getFeatures() {
+    public List<TrackFeature<?>> getFeatures() {
         return this.features;
     }
 
@@ -172,22 +170,12 @@ public class Track {
 
         Location spawnLocation = new Location(0, 0, 0, 0, 0);
 
-        for (TrackFeature feature : this.features) {
+        for (TrackFeature<?> feature : this.features) {
             if (feature instanceof GridLocation gridLocation) {
                 gridLocations.put(gridLocation.getIndex(), new Location(gridLocation.getX(), gridLocation.getY(),
                         gridLocation.getZ(), (float) Math.toDegrees(gridLocation.getR()), 0));
-            } else if (feature instanceof LineCheckpoint lineCheckpoint) {
-                checkpoints.put(
-                        new TrackCheckpoint.LineCheckpoint(new Vec2(lineCheckpoint.getX1(), lineCheckpoint.getZ1()),
-                                new Vec2(lineCheckpoint.getX2(), lineCheckpoint.getZ2()), lineCheckpoint.getY(),
-                                lineCheckpoint.getHalfHeight() * 2),
-                        lineCheckpoint.getIndex());
-            } else if (feature instanceof CuboidCheckpoint cuboidCheckpoint) {
-                checkpoints.put(
-                        new TrackCheckpoint.CuboidCheckpoint(
-                                new Vec3(cuboidCheckpoint.getX1(), cuboidCheckpoint.getY1(), cuboidCheckpoint.getZ1()),
-                                new Vec3(cuboidCheckpoint.getX2(), cuboidCheckpoint.getY2(), cuboidCheckpoint.getZ2())),
-                        cuboidCheckpoint.getIndex());
+            } else if (feature instanceof io.gitlab.icestom.icestom_mod.track.feature.checkpoint.TrackCheckpoint<?> checkpoint) {
+                checkpoints.put(checkpoint.toEncoded(), checkpoint.getIndex());
             } else if (feature instanceof SpawnLocation spawn) {
                 spawnLocation = new Location(spawn.getX(), spawn.getY(), spawn.getZ(),
                         (float) Math.toDegrees(spawn.getR()), 0);
@@ -203,7 +191,7 @@ public class Track {
             }
 
             @Override
-            public Component getName() {
+            public @NonNull Component getName() {
                 return Component.text(id);
             }
 

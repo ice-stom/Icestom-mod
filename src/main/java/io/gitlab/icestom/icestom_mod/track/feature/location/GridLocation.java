@@ -1,9 +1,8 @@
 package io.gitlab.icestom.icestom_mod.track.feature.location;
 
-import io.gitlab.icestom.icestom_mod.render.renderers.BoatLocationRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.IndexedFeature;
 
-public class GridLocation extends BoatLocation implements IndexedFeature {
+public class GridLocation extends BoatLocation<GridLocation.GridLocationRenderState> implements IndexedFeature {
     private final int index;
 
     public GridLocation(double x, double y, double z, float r, int index) {
@@ -11,11 +10,26 @@ public class GridLocation extends BoatLocation implements IndexedFeature {
         this.index = index;
     }
 
-    public BoatLocationRenderer.BoatLocationRenderState renderState() {
-        return new BoatLocationRenderer.BoatLocationRenderState(this.x, this.y, this.z, this.r, this.index);
-    }
-
     @Override public int getIndex() {
         return this.index;
+    }
+
+    @Override
+    public GridLocationRenderState getRenderState(int globalIndex) {
+        return new GridLocationRenderState(x, y, z, r, index, globalIndex);
+    }
+
+    public record GridLocationRenderState(
+            double x,
+            double y,
+            double z,
+            float r,
+            int index,
+            int globalIndex
+    ) implements BoatLocationRenderState {
+        @Override
+        public String label() {
+            return String.valueOf(index);
+        }
     }
 }

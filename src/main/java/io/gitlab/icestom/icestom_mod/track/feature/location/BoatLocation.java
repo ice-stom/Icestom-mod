@@ -1,10 +1,12 @@
 package io.gitlab.icestom.icestom_mod.track.feature.location;
 
 import io.gitlab.icestom.icestom_mod.GizmoHandler;
-import io.gitlab.icestom.icestom_mod.render.renderers.BoatLocationRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.BoatLocationRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.TrackFeature;
+import net.minecraft.world.phys.Vec3;
 
-public abstract class BoatLocation extends TrackFeature {
+public abstract class BoatLocation<RenderState extends BoatLocationRenderer.BoatLocationRenderable & FeatureLabelRenderer.FeatureRenderable> extends TrackFeature<RenderState> {
     private final GizmoHandler.Gizmo main;
     private final GizmoHandler.Gizmo rotation;
     protected double x;
@@ -23,10 +25,6 @@ public abstract class BoatLocation extends TrackFeature {
 
         this.rotation.setX(this.x - Math.sin(r) * 2.0);
         this.rotation.setZ(this.z + Math.cos(r) * 2.0);
-    }
-
-    public BoatLocationRenderer.BoatLocationRenderState renderState() {
-        return new BoatLocationRenderer.BoatLocationRenderState(this.x, this.y, this.z, this.r, 0);
     }
 
     public void onGizmoMoved(GizmoHandler.Gizmo gizmo) {
@@ -73,4 +71,11 @@ public abstract class BoatLocation extends TrackFeature {
     public float getR() {
         return this.r;
     }
+
+    @Override
+    public Vec3 getRootPosition() {
+        return new Vec3(x, y, z);
+    }
+
+    public interface BoatLocationRenderState extends BoatLocationRenderer.BoatLocationRenderable, FeatureLabelRenderer.FeatureRenderable {}
 }

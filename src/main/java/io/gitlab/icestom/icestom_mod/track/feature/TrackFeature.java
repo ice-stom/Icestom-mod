@@ -5,11 +5,10 @@ import io.gitlab.icestom.icestom_mod.IceStomModClient;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.LineCheckpoint;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
+import net.minecraft.world.phys.Vec3;
 
-public abstract class TrackFeature implements AutoCloseable {
+public abstract class TrackFeature<RenderState extends FeatureLabelRenderer.FeatureRenderable> implements AutoCloseable {
 
     private final GizmoHandler gizmoHandler = IceStomModClient.getInstance().getGizmoHandler();
     private final List<GizmoHandler.Gizmo> gizmos = new ArrayList<>();
@@ -29,5 +28,47 @@ public abstract class TrackFeature implements AutoCloseable {
         return this.gizmos;
     }
 
+    @SuppressWarnings("unchecked")
+    public RenderState getRenderState(int globalIndex) {
+        Vec3 root = getRootPosition();
+
+        return (RenderState) new FeatureRenderStateImpl(
+                globalIndex,
+                root.x,
+                root.y,
+                root.z
+        );
+    }
+
     public abstract void onGizmoMoved(GizmoHandler.Gizmo var1);
+
+    public abstract Vec3 getRootPosition();
+    public float getLabelHeight() { return 2f; }
+
+    public interface FeatureRenderState extends FeatureLabelRenderer.FeatureRenderable {
+        String type();
+        String label();
+        int globalIndex();
+        double x();
+        double y();
+        double z();
+    }
+
+    public record FeatureRenderStateImpl(
+            int globalIndex,
+            double x,
+            double y,
+            double z
+    ) implements FeatureRenderState {
+
+        @Override
+        public String type() {
+            return this.getClass().getSimpleName();
+        }
+
+        @Override
+        public String label() {
+            return "unknown";
+        }
+    }
 }

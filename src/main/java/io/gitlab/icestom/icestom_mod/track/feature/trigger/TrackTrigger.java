@@ -1,5 +1,5 @@
 package io.gitlab.icestom.icestom_mod.track.feature.trigger;
 
-import io.gitlab.icestom.icestom_mod.track.feature.TaggedFeature;
+import io.gitlab.icestom.icestom_mod.track.feature.MultipleTaggedFeature;
 
-public interface TrackTrigger extends TaggedFeature {}
+public interface TrackTrigger extends MultipleTaggedFeature {}

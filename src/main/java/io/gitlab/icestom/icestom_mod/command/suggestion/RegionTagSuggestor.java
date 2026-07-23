@@ -8,12 +8,14 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
 import io.gitlab.icestom.icestom_mod.track.Track;
 import io.gitlab.icestom.icestom_mod.track.TrackHandler;
+import io.gitlab.icestom.icestom_mod.track.feature.region.TrackRegion;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class RegionTagSuggestor extends AbstractTagSuggester {
     private static final Set<String> KNOWN = new HashSet<>(List.of(
@@ -28,7 +30,11 @@ public class RegionTagSuggestor extends AbstractTagSuggester {
     protected Collection<String> getAdditional() {
         Track track = IceStomModClient.getInstance().trackHandler.getSelectedTrack();
 
-        if (track != null) return track.
+        if (track != null) return track.getFeatures().stream()
+                .filter(trackFeature -> trackFeature instanceof TrackRegion)
+                .map(trackFeature -> ((TrackRegion) trackFeature).getTags())
+                .flatMap(Set::stream)
+                .collect(Collectors.toList());
 
         return Collections.emptyList();
     }

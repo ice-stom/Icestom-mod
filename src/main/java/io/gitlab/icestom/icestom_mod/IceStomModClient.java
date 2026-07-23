@@ -6,6 +6,9 @@ import io.gitlab.icestom.icestom_mod.render.hud.editor.TrackEditor;
 import io.gitlab.icestom.icestom_mod.render.pipeline.IcestomRenderPipeline;
 import io.gitlab.icestom.icestom_mod.render.renderers.*;
 // import io.gitlab.icestom.icestom_mod.track.EnvironmentFile;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.BoatLocationRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.CuboidFeatureRenderer;
+import io.gitlab.icestom.icestom_mod.render.renderers.generic.LineFeatureRenderer;
 import io.gitlab.icestom.icestom_mod.track.Track;
 import io.gitlab.icestom.icestom_mod.track.TrackHandler;
 import io.gitlab.icestom.stomtrack.TrackFile;
@@ -51,16 +54,22 @@ public class IceStomModClient implements ClientModInitializer {
             CATEGORY
     ));
 
+    public static final KeyMapping EDITOR_DETAILS = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+            "key." + IceStomMod.MOD_ID + ".editor_label",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_LEFT_ALT,
+            CATEGORY
+    ));
+
     private final List<IcestomRenderPipeline<?>> pipelines = new ArrayList<>();
 
     public final GizmoRenderer gizmoRenderer = this.registerPipeline(new GizmoRenderer());
-    public final LineCheckpointRenderer lineCheckpointRenderer = this.registerPipeline(new LineCheckpointRenderer());
-    public final LineCheckpointTextRenderer lineCheckpointTextRenderer = this.registerPipeline(new LineCheckpointTextRenderer());
-    public final CuboidCheckpointRenderer cuboidCheckpointRenderer = this.registerPipeline(new CuboidCheckpointRenderer());
-    public final CuboidCheckpointTextRenderer cuboidCheckpointTextRenderer = this.registerPipeline(new CuboidCheckpointTextRenderer());
-    public final GridLocationRenderer gridRenderer = this.registerPipeline(new GridLocationRenderer());
-    public final GridLocationTextRenderer gridTextRenderer = this.registerPipeline(new GridLocationTextRenderer());
-    public final SpawnLocationRenderer spawnLocationRenderer = this.registerPipeline(new SpawnLocationRenderer());
+
+    public final FeatureLabelRenderer featureRenderer = this.registerPipeline(new FeatureLabelRenderer());
+    public final LineFeatureRenderer<LineFeatureRenderer.LineRenderable> lineFeatureRenderer = this.registerPipeline(new LineFeatureRenderer<>());
+    public final CuboidFeatureRenderer<CuboidFeatureRenderer.CuboidRenderable> cuboidFeatureRenderable = this.registerPipeline(new CuboidFeatureRenderer<>());
+    public final BoatLocationRenderer<BoatLocationRenderer.BoatLocationRenderable> boatLocationRenderer = this.registerPipeline(new BoatLocationRenderer<>());
+
 
     public final GizmoHandler gizmoHandler = new GizmoHandler();
     public final TrackHandler trackHandler = new TrackHandler();
@@ -79,6 +88,10 @@ public class IceStomModClient implements ClientModInitializer {
     }
 
     public void onInitializeClient() {
+        WorldRenderEvents.END_MAIN.register(context -> {
+            FeatureLabelRenderer.setShowDetails(EDITOR_DETAILS.isDown());
+        });
+
         this.pipelines.forEach((pipeline) -> {
             WorldRenderEvents.END_MAIN.register(pipeline::extractAndDraw);
         });
@@ -111,9 +124,9 @@ public class IceStomModClient implements ClientModInitializer {
                          environmentFile.setHeight(integratedServer.overworld().getHeight());
 
                          TrackLoader.saveEnvironmentFile(new FileOutputStream(file), environmentFile);
-                     } catch (IOException var13) {
+                     } catch (IOException e) {
                          Minecraft.getInstance().doRunTask(() -> {
-                             Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Failed to load environment data:" + var13));
+                             Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Failed to load environment data:" + e));
                          });
                      }
 
