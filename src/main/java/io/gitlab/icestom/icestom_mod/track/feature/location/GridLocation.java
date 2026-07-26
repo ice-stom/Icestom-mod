@@ -31,5 +31,8 @@ public class GridLocation extends BoatLocation<GridLocation.GridLocationRenderSt
         public String label() {
             return String.valueOf(index);
         }
+
+        @Override
+        public String type() { return "Grid"; }
     }
 }

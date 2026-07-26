@@ -56,5 +56,8 @@ public class CuboidCheckpoint extends Cuboid<Cuboid.CuboidRenderState> implement
         public String label() {
             return String.valueOf(index);
         }
+
+        @Override
+        public String type() { return "CuboidCheckpoint"; }
     }
 }

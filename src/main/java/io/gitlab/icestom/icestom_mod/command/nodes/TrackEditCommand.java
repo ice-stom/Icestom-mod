@@ -13,6 +13,8 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import io.gitlab.icestom.icestom_mod.IceStomModClient;
 import io.gitlab.icestom.icestom_mod.command.ArgumentFetcher;
 import io.gitlab.icestom.icestom_mod.command.BoatUtilsNodeGenerator;
+import io.gitlab.icestom.icestom_mod.command.argument.NoLeadingDashArgumentType;
+import io.gitlab.icestom.icestom_mod.command.argument.StringSetArgumentType;
 import io.gitlab.icestom.icestom_mod.command.suggestion.TrackSuggestor;
 import io.gitlab.icestom.icestom_mod.command.argument.FlagArgumentType;
 import io.gitlab.icestom.icestom_mod.command.suggestion.TrackTagSuggester;
@@ -21,8 +23,14 @@ import io.gitlab.icestom.icestom_mod.track.TrackHandler;
 import io.gitlab.icestom.icestom_mod.track.feature.*;
 import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.CuboidCheckpoint;
 import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.LineCheckpoint;
+import io.gitlab.icestom.icestom_mod.track.feature.checkpoint.TrackCheckpoint;
+import io.gitlab.icestom.icestom_mod.track.feature.location.BoatLocation;
 import io.gitlab.icestom.icestom_mod.track.feature.location.GridLocation;
 import io.gitlab.icestom.icestom_mod.track.feature.location.SpawnLocation;
+import io.gitlab.icestom.icestom_mod.track.feature.location.TrackLocation;
+import io.gitlab.icestom.icestom_mod.track.feature.region.CuboidRegion;
+import io.gitlab.icestom.icestom_mod.track.feature.region.TrackRegion;
+import io.gitlab.icestom.icestom_mod.track.feature.trigger.LineTrigger;
 import io.gitlab.icestom.stomtrack.shadow.io.github.openboatutils.protocol.channels.OBUSettingsPacket;
 import io.gitlab.icestom.stomtrack.type.Location;
 
@@ -37,7 +45,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +54,7 @@ import org.jetbrains.annotations.NotNull;
 @Environment(EnvType.CLIENT)
 public class TrackEditCommand implements CommandNodeProvider {
 
-    public WeakReference<TrackFeature> lastTouchedFeature = new WeakReference<>(null);
+    public WeakReference<TrackFeature<?>> lastTouchedFeature = new WeakReference<>(null);
 
     private static final SimpleCommandExceptionType NO_TRACK_SELECTED =
             new SimpleCommandExceptionType(new LiteralMessage("No track selected."));
@@ -55,7 +62,7 @@ public class TrackEditCommand implements CommandNodeProvider {
     private static final SimpleCommandExceptionType NO_TRACK_TAG =
             new SimpleCommandExceptionType(new LiteralMessage("Track doesn't have this tag."));
 
-    private LiteralArgumentBuilder<FabricClientCommandSource> genericIndexedTree(String literal, Command<FabricClientCommandSource> command) {
+    private <F extends Enum<F>> LiteralArgumentBuilder<FabricClientCommandSource> genericIndexedTree(String literal, Class<F> flags, Command<FabricClientCommandSource> command) {
         return literal(literal)
                 .executes(command)
                 .then(argument("index", IntegerArgumentType.integer(0))
@@ -64,25 +71,110 @@ public class TrackEditCommand implements CommandNodeProvider {
                             return builder.buildFuture();
                         })
                         .executes(command))
-                .then(argument("flags", FlagArgumentType.flags(CheckpointFlags.class))
+                .then(argument("flags", FlagArgumentType.flags(flags))
                         .executes(command)
                         .then(argument("index", IntegerArgumentType.integer(0))
                                 .executes(command)));
     }
 
-    private LiteralArgumentBuilder<FabricClientCommandSource> genericTaggedTree(String literal, Command<FabricClientCommandSource> command) {
+    private <F extends Enum<F>> LiteralArgumentBuilder<FabricClientCommandSource> genericTaggedTree(String literal, Class<F> flags, Command<FabricClientCommandSource> command) {
         return literal(literal)
-                .executes(command)
-                .then(argument("tag", StringArgumentType.word())
+//                .executes(command)
+                .then(argument("tags", NoLeadingDashArgumentType.wrap(StringSetArgumentType.stringSet(1)))
                         .suggests((_, builder) -> {
                             if (builder.getRemainingLowerCase().isEmpty()) builder.suggest("<tag>");
                             return builder.buildFuture();
                         })
                         .executes(command))
-                .then(argument("flags", FlagArgumentType.flags(RegionFlags.class))
-                        .executes(command)
-                        .then(argument("tag", StringArgumentType.word())
+                .then(argument("flags", FlagArgumentType.flags(flags))
+//                        .executes(command)
+                        .then(argument("tags", NoLeadingDashArgumentType.wrap(StringSetArgumentType.stringSet(1)))
                                 .executes(command)));
+    }
+
+    private <F extends Enum<F>> LiteralArgumentBuilder<FabricClientCommandSource> genericRequiredTagTree(String literal, Class<F> flags, Command<FabricClientCommandSource> command) {
+        return literal(literal)
+                .then(argument("tag", NoLeadingDashArgumentType.wrap(StringArgumentType.greedyString()))
+                        .suggests((_, builder) -> {
+                            if (builder.getRemainingLowerCase().isEmpty()) builder.suggest("<tag>");
+                            return builder.buildFuture();
+                        })
+                        .executes(command))
+                .then(argument("flags", FlagArgumentType.flags(flags))
+                        .then(argument("tag", NoLeadingDashArgumentType.wrap(StringArgumentType.greedyString()))
+                                .executes(command)));
+    }
+
+    private Command<FabricClientCommandSource> makeDoCheckpoint(DefaultTrackFeatureConstructor<TrackCheckpoint<?>, Integer> defaultConstructor, Class<?> type) {
+        return context -> {
+            Track track = activeTrack();
+            Player player = player();
+
+            EnumSet<CheckpointFlags> flags = ArgumentFetcher.getOptionalArgument(
+                    context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(CheckpointFlags.class));
+            int index = ArgumentFetcher.getOptionalArgument(
+                    context, "index", IntegerArgumentType::getInteger, track.getMaxIndexOfFeature(TrackCheckpoint.class, -1) + 1);
+
+
+            if (flags.contains(CheckpointFlags.DELETE) || !flags.contains(CheckpointFlags.OVERRIDE)) {
+                track.getFeatures()
+                        .stream()
+                        .filter(trackFeature -> type.isAssignableFrom(trackFeature.getClass()))
+                        .filter(trackFeature -> ((TrackCheckpoint<?>) trackFeature).getIndex() == index)
+                        .toList()
+                        .forEach(track::removeFeature);
+            }
+
+            if (!flags.contains(CheckpointFlags.DELETE)) {
+                TrackFeature<?> trackCheckpoint = (TrackFeature<?>) defaultConstructor.construct(player, index);
+
+                track.addFeature(trackCheckpoint);
+
+                lastTouchedFeature = new WeakReference<>(trackCheckpoint);
+            }
+
+            track.updateRenderState();
+
+            return Command.SINGLE_SUCCESS;
+        };
+    }
+
+    private Command<FabricClientCommandSource> makeDoTaggedThing(DefaultTrackFeatureConstructor<MultipleTaggedFeature, Set<String>> defaultConstructor, Class<?> type) {
+        return context -> {
+            Track track = activeTrack();
+            Player player = player();
+
+            EnumSet<RegionFlags> flags = ArgumentFetcher.getOptionalArgument(
+                    context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(RegionFlags.class));
+            Set<String> tags = StringSetArgumentType.getUniqueStrings(context, "tags");
+
+            if (flags.contains(RegionFlags.DELETE) || flags.contains(RegionFlags.REPLACE)) {
+                track.getFeatures()
+                        .stream()
+                        .filter(trackFeature -> type.isAssignableFrom(trackFeature.getClass()))
+                        .filter(trackFeature -> {
+                            Set<String> intersection = new HashSet<>(((TrackRegion) trackFeature).getTags());
+
+                            intersection.retainAll(tags);
+
+                            return !intersection.isEmpty();
+                        })
+                        .toList()
+                        .forEach(track::removeFeature);
+            }
+
+            if (!flags.contains(RegionFlags.DELETE)) {
+                TrackFeature<?> trackRegion = (TrackFeature<?>) defaultConstructor.construct(player, tags);
+
+                track.addFeature(trackRegion);
+
+                lastTouchedFeature = new WeakReference<>(trackRegion);
+            }
+
+            track.updateRenderState();
+
+            return Command.SINGLE_SUCCESS;
+        };
     }
 
     public LiteralArgumentBuilder<FabricClientCommandSource> command() {
@@ -105,13 +197,50 @@ public class TrackEditCommand implements CommandNodeProvider {
                 .then(literal("obu").executes(this::doOBUList).then(literal("list").executes(this::doOBUList))
                         .then(BoatUtilsNodeGenerator.getBoatUtilsNode(literal("add"), this::doOBUAdd)))
                 .then(literal("checkpoint")
-                        .then(genericIndexedTree("line", this::doCheckpointLine))
-                        .then(genericIndexedTree("cuboid", this::doCheckpointCuboid)))
-                .then(genericIndexedTree("grid", this::doCreateGrid))
+                        .then(genericIndexedTree("line", CheckpointFlags.class, makeDoCheckpoint((player, index) -> new LineCheckpoint(
+                                player.getX() - 4,
+                                player.getZ() - 4,
+                                player.getX() + 4,
+                                player.getZ() + 4,
+                                player.getY(),
+                                2f,
+                                index
+                        ), TrackCheckpoint.class)))
+                        .then(genericIndexedTree("cuboid", CheckpointFlags.class, makeDoCheckpoint((player, index) -> new CuboidCheckpoint(
+                                player.getX() - 4,
+                                player.getY() - 4,
+                                player.getZ() - 4,
+                                player.getX() + 4,
+                                player.getY() + 4,
+                                player.getZ() + 4,
+                                index
+                        ), TrackCheckpoint.class))))
+                .then(genericIndexedTree("grid", GridFlags.class, this::doCreateGrid))
                 .then(literal("spawn")
-                        .executes(this::doSpawnLocation))
+                        .executes(this::doSpawnLocation)
+                        .then(argument("flags", FlagArgumentType.flags(SpawnLocationFlags.class))
+                                .executes(this::doSpawnLocation)))
                 .then(literal("region")
-                        .then(genericTaggedTree("cuboid", this::doRegionCuboid)));
+                        .then(genericTaggedTree("cuboid", RegionFlags.class, makeDoTaggedThing((player, tags) -> new CuboidRegion(
+                                player.getX() - 4,
+                                player.getY() - 4,
+                                player.getZ() - 4,
+                                player.getX() + 4,
+                                player.getY() + 4,
+                                player.getZ() + 4,
+                                tags
+                        ), TrackRegion.class))))
+                .then(literal("trigger")
+                        .then(genericTaggedTree("line", TriggerFlags.class, makeDoTaggedThing((player, tags) -> new LineTrigger(
+                                player.getX() - 4,
+                                player.getZ() - 4,
+                                player.getX() + 4,
+                                player.getZ() + 4,
+                                player.getY(),
+                                2f,
+                                tags
+                        ), TrackRegion.class))))
+                .then(genericRequiredTagTree("location", LocationFlags.class, this::doLocation));
 //                .then(checkpoint_update(literal("last"), context -> {
 //                    if (lastTouchedFeature.get() instanceof TrackCheckpoint trackCheckpoint) {
 //                        return trackCheckpoint;
@@ -121,12 +250,46 @@ public class TrackEditCommand implements CommandNodeProvider {
 //                }));
     }
 
-    private int doTrackInfo(CommandContext<FabricClientCommandSource> context) {
-        context.getSource().sendFeedback(Component.literal("i can't be asked to implement this yet"));
-        return 0;
+    private int doLocation(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
+        Track track = activeTrack();
+        Player player = player();
+
+        EnumSet<LocationFlags> flags = ArgumentFetcher.getOptionalArgument(
+                context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(LocationFlags.class));
+        String tag = StringArgumentType.getString(context, "tag");
+
+        track.getFeatures()
+                .stream()
+                .filter(trackFeature -> trackFeature instanceof TrackLocation)
+                .filter(trackFeature -> ((TrackLocation) trackFeature).getTag().equals(tag))
+                .toList()
+                .forEach(track::removeFeature);
+
+        if (!flags.contains(LocationFlags.DELETE)) {
+            BoatLocation<TrackLocation.TrackLocationRenderState> trackLocation = new TrackLocation(
+                    player.getX(),
+                    player.getY(),
+                    player.getZ(),
+                    (float) Math.toRadians(player.getYRot()),
+                    tag
+            );
+
+            if (flags.contains(LocationFlags.SNAP)) {
+                trackLocation.snapToPlayer(player);
+            }
+
+            track.addFeature(trackLocation);
+
+            lastTouchedFeature = new WeakReference<>(trackLocation);
+        }
+
+        track.updateRenderState();
+
+        return Command.SINGLE_SUCCESS;
     }
 
-    private int doRegionCuboid(CommandContext<FabricClientCommandSource> context) {
+    private int doTrackInfo(CommandContext<FabricClientCommandSource> context) {
+        context.getSource().sendFeedback(Component.literal("i can't be asked to implement this yet"));
         return 0;
     }
 
@@ -158,9 +321,21 @@ public class TrackEditCommand implements CommandNodeProvider {
         Track track = activeTrack();
         Player player = player();
 
+        EnumSet<SpawnLocationFlags> spawnLocationFlags = ArgumentFetcher.getOptionalArgument(context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(SpawnLocationFlags.class));
+
         track.getFeatures().stream().filter(trackFeature -> trackFeature instanceof SpawnLocation).toList().forEach(track::removeFeature);
 
-        SpawnLocation spawnLocation = new SpawnLocation(player.getX(), player.getY(), player.getZ(), (float) Math.toRadians(player.getYRot()));
+        SpawnLocation spawnLocation = new SpawnLocation(
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                (float) Math.toRadians(player.getYRot())
+        );
+
+        if (spawnLocationFlags.contains(SpawnLocationFlags.SNAP)) {
+            spawnLocation.snapToPlayer(player);
+        }
+
         track.addFeature(spawnLocation);
 
         context.getSource().sendFeedback(Component.literal(String.format("Moved spawn to [%.2f,%.2f,%.2f] %.2fdeg", spawnLocation.getX(), spawnLocation.getY(), spawnLocation.getZ(), Math.toDegrees(spawnLocation.getR()))));
@@ -250,7 +425,7 @@ public class TrackEditCommand implements CommandNodeProvider {
         int index = ArgumentFetcher.getOptionalArgument(
                 context, "index", IntegerArgumentType::getInteger, 0);
 
-        if (flags.contains(GridFlags.REMOVE)) {
+        if (flags.contains(GridFlags.DELETE)) {
             track.getFeatures()
                     .stream()
                     .filter(trackFeature -> trackFeature instanceof GridLocation)
@@ -275,80 +450,6 @@ public class TrackEditCommand implements CommandNodeProvider {
         return Command.SINGLE_SUCCESS;
     }
 
-    private int doCheckpointCuboid(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        Track track = activeTrack();
-        Player player = player();
-
-        EnumSet<CheckpointFlags> flags = ArgumentFetcher.getOptionalArgument(
-                context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(CheckpointFlags.class));
-        int index = ArgumentFetcher.getOptionalArgument(
-                context, "index", IntegerArgumentType::getInteger, 0);
-
-        if (flags.contains(CheckpointFlags.REMOVE) || !flags.contains(CheckpointFlags.OVERRIDE)) {
-            track.getFeatures()
-                    .stream()
-                    .filter(trackFeature -> trackFeature instanceof CuboidCheckpoint)
-                    .filter(trackFeature -> ((CuboidCheckpoint) trackFeature).getIndex() == index)
-                    .toList()
-                    .forEach(track::removeFeature);
-        }
-
-        if (!flags.contains(CheckpointFlags.REMOVE)) {
-            Vec3 position = player.position();
-
-            CuboidCheckpoint cuboidCheckpoint = new CuboidCheckpoint(
-                    position.x - 2.0F, position.y - 2.0F, position.z - 2.0F,
-                    position.x + 2.0F, position.y + 2.0F, position.z + 2.0F,
-                    index
-            );
-
-            track.addFeature(cuboidCheckpoint);
-
-            lastTouchedFeature = new WeakReference<>(cuboidCheckpoint);
-        }
-
-        track.updateRenderState();
-
-        return Command.SINGLE_SUCCESS;
-    }
-
-    private int doCheckpointLine(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        Track track = activeTrack();
-        Player player = player();
-
-        EnumSet<CheckpointFlags> flags = ArgumentFetcher.getOptionalArgument(
-                context, "flags", FlagArgumentType::getFlags, EnumSet.noneOf(CheckpointFlags.class));
-        int index = ArgumentFetcher.getOptionalArgument(
-                context, "index", IntegerArgumentType::getInteger, 0);
-
-        if (flags.contains(CheckpointFlags.REMOVE) || !flags.contains(CheckpointFlags.OVERRIDE)) {
-            track.getFeatures()
-                    .stream()
-                    .filter(trackFeature -> trackFeature instanceof LineCheckpoint)
-                    .filter(trackFeature -> ((LineCheckpoint) trackFeature).getIndex() == index)
-                    .toList()
-                    .forEach(track::removeFeature);
-        }
-
-        if (!flags.contains(CheckpointFlags.REMOVE)) {
-            Vec3 position = player.position();
-
-            LineCheckpoint lineCheckpoint = new LineCheckpoint(
-                    position.x - 2.0F, position.z - 2.0F,
-                    position.x + 2.0F, position.z + (double) 2.0F,
-                    position.y + 2.0F, 2.0F,
-                    index
-            );
-
-            track.addFeature(lineCheckpoint);
-
-            lastTouchedFeature = new WeakReference<>(lineCheckpoint);
-        }
-
-        track.updateRenderState();
-
-        return Command.SINGLE_SUCCESS;
-    }
 
 
     private int doSelect(CommandContext<FabricClientCommandSource> context) {
@@ -409,15 +510,52 @@ public class TrackEditCommand implements CommandNodeProvider {
     }
 
     public enum CheckpointFlags {
-        REMOVE,
-        OVERRIDE
+        DELETE,
+        OVERRIDE;
     }
 
-    public enum GridFlags {
-        REMOVE
+    public enum GridFlags implements FlagArgumentType.DescribedFlag {
+        DELETE,
+        SNAP;
+
+        @Override
+        public String getDescription() {
+            if (this == SNAP) return "Snap to nearest block centre";
+
+            return null;
+        }
     }
 
     public enum RegionFlags {
-        REMOVE
+        DELETE,
+        REPLACE
+    }
+
+    public enum TriggerFlags {
+        DELETE,
+        REPLACE
+    }
+
+    public enum LocationFlags implements FlagArgumentType.DescribedFlag {
+        DELETE,
+        SNAP;
+
+        @Override
+        public String getDescription() {
+            if (this == SNAP) return "Snap to nearest block centre";
+
+            return null;
+        }
+    }
+
+    public enum SpawnLocationFlags implements FlagArgumentType.DescribedFlag {
+        SNAP;
+
+        @Override
+        public String getDescription() {
+            if (this == SNAP) return "Snap to nearest block centre";
+
+            return null;
+        }
     }
 }

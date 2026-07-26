@@ -1,14 +1,12 @@
 package io.gitlab.icestom.icestom_mod.track.feature.location;
 
-import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
-
-public class SpawnLocation<RenderState extends BoatLocation.BoatLocationRenderState> extends BoatLocation {
+public class SpawnLocation extends BoatLocation<SpawnLocation.SpawnLocationRenderState> {
     public SpawnLocation(double x, double y, double z, float r) {
         super(x, y, z, r);
     }
 
     @Override
-    public FeatureLabelRenderer.FeatureRenderable getRenderState(int globalIndex) {
+    public SpawnLocationRenderState getRenderState(int globalIndex) {
         return new SpawnLocationRenderState(
                 x,
                 y,
@@ -25,6 +23,9 @@ public class SpawnLocation<RenderState extends BoatLocation.BoatLocationRenderSt
             float r,
             int globalIndex
     ) implements BoatLocationRenderState {
+        @Override
+        public String type() { return "Spawn"; }
+
         @Override
         public String label() {
             return "Spawn";

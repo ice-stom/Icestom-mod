@@ -1,5 +1,6 @@
 package io.gitlab.icestom.icestom_mod.command.argument;
 
+import com.mojang.brigadier.Message;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -8,7 +9,10 @@ import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
 
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -72,6 +76,7 @@ public final class FlagArgumentType<T extends Enum<T>> implements ArgumentType<E
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         String remaining = builder.getRemaining();
 
@@ -86,7 +91,19 @@ public final class FlagArgumentType<T extends Enum<T>> implements ArgumentType<E
         for (T constant : enumClass.getEnumConstants()) {
             char letter = Character.toLowerCase(constant.name().charAt(0));
             if (typed.indexOf(letter) < 0) {
-                builder.suggest(remaining + letter);
+                var component = Component.literal(String.valueOf(Character.toUpperCase(letter)))
+                        .withColor(0x9CC9FC)
+                        .append(Component.literal(constant.name().toLowerCase().substring(1))
+                                .withColor(0xFFFFFF));
+
+                if (DescribedFlag.class.isAssignableFrom(enumClass)) {
+                    String description = ((DescribedFlag) constant).getDescription();
+
+                    if (description != null) component.append(Component.literal(": " + description)
+                            .withColor(0xFFFFFF));
+                }
+
+                builder.suggest(remaining + letter, component);
             }
         }
         return builder.buildFuture();
@@ -95,5 +112,9 @@ public final class FlagArgumentType<T extends Enum<T>> implements ArgumentType<E
     @SuppressWarnings("unchecked")
     public static <T extends Enum<T>> EnumSet<T> getFlags(CommandContext<?> context, String name) {
         return (EnumSet<T>) context.getArgument(name, EnumSet.class);
+    }
+
+    public interface DescribedFlag {
+        String getDescription();
     }
 }

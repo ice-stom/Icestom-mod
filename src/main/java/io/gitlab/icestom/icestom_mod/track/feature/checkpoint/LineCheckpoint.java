@@ -8,7 +8,7 @@ public class LineCheckpoint extends Line<LineCheckpoint.LineCheckpointRenderStat
     private int index;
 
     public LineCheckpoint(double x1, double z1, double x2, double z2, double y, double height, int index) {
-        super(x1, z1, x2, x2, y, height);
+        super(x1, z1, x2, z2, y, height);
         this.index = index;
     }
 
@@ -54,5 +54,8 @@ public class LineCheckpoint extends Line<LineCheckpoint.LineCheckpointRenderStat
         public String label() {
             return String.valueOf(index);
         }
+
+        @Override
+        public String type() { return "LineCheckpoint"; }
     }
 }

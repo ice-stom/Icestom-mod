@@ -37,5 +37,8 @@ public class TrackLocation extends BoatLocation<TrackLocation.TrackLocationRende
         public String label() {
             return tag;
         }
+
+        @Override
+        public String type() { return "Location"; }
     }
 }

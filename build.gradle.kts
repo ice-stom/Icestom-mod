@@ -21,7 +21,7 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
-	implementation("io.gitlab.icestom:stomtrack:0.0.16")
+	implementation("io.gitlab.icestom:stomtrack:0.0.21")
 
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
 

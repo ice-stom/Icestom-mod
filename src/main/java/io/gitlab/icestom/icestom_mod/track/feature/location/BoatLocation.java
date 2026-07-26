@@ -1,9 +1,11 @@
 package io.gitlab.icestom.icestom_mod.track.feature.location;
 
 import io.gitlab.icestom.icestom_mod.GizmoHandler;
+import io.gitlab.icestom.icestom_mod.command.nodes.TrackEditCommand;
 import io.gitlab.icestom.icestom_mod.render.renderers.FeatureLabelRenderer;
 import io.gitlab.icestom.icestom_mod.render.renderers.generic.BoatLocationRenderer;
 import io.gitlab.icestom.icestom_mod.track.feature.TrackFeature;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class BoatLocation<RenderState extends BoatLocationRenderer.BoatLocationRenderable & FeatureLabelRenderer.FeatureRenderable> extends TrackFeature<RenderState> {
@@ -26,6 +28,27 @@ public abstract class BoatLocation<RenderState extends BoatLocationRenderer.Boat
         this.rotation.setX(this.x - Math.sin(r) * 2.0);
         this.rotation.setZ(this.z + Math.cos(r) * 2.0);
     }
+
+    public void snapToPlayer(Player player) {
+        double rx = player.getX();
+        double ry = player.getY();
+        double rz = player.getZ();
+        float rr = player.getYRot();
+
+        main.setX(Math.round(rx * 2.0) / 2.0);
+        main.setY(Math.round(ry * 2.0) / 2.0);
+        main.setZ(Math.round(rz * 2.0) / 2.0);
+
+        rr = Math.round(rr / 15.0f) * 15.0f;
+
+        if (rr >= 180.0f) rr -= 360.0f;
+        if (rr < -180.0f) rr += 360.0f;
+
+        this.r = (float) Math.toRadians(rr);
+
+        onGizmoMoved(main);
+    }
+
 
     public void onGizmoMoved(GizmoHandler.Gizmo gizmo) {
         if (gizmo == this.main) {

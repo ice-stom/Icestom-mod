@@ -15,10 +15,7 @@ public class FeatureLabelRenderer extends BillboardTextPipeline<FeatureLabelRend
 
     public interface FeatureRenderable extends BillboardTextRenderable<FeatureRenderable> {
 
-        default String type(){
-            return this.getClass().getSimpleName();
-        }
-
+        String type();
         String label();
 
         int globalIndex();

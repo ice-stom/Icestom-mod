@@ -45,19 +45,17 @@ public abstract class TrackFeature<RenderState extends FeatureLabelRenderer.Feat
 
     public abstract Vec3 getRootPosition();
 
-    public interface FeatureRenderState extends FeatureLabelRenderer.FeatureRenderable {}
-
     public record FeatureRenderStateImpl(
             int globalIndex,
             double x,
             double y,
             double z,
             float labelHeight
-    ) implements FeatureRenderState {
+    ) implements FeatureLabelRenderer.FeatureRenderable {
 
         @Override
         public String type() {
-            return this.getClass().getSimpleName();
+            return "Feature";
         }
 
         @Override

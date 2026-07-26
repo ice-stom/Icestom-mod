@@ -73,9 +73,9 @@ public abstract class Line<RenderState extends LineFeatureRenderer.LineRenderabl
 
     public interface LineRenderState extends LineFeatureRenderer.LineRenderable, FeatureLabelRenderer.FeatureRenderable {
 
+        double z1();
         double x1();
         double x2();
-        double z1();
         double z2();
 
         @Override
