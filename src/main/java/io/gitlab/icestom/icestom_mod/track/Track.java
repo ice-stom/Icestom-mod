@@ -156,16 +156,6 @@ public class Track {
             }
         });
 
-        trackData.getLocations().forEach((tag, location) -> {
-            track.addFeature(new TrackLocation(
-                    location.x(),
-                    location.y(),
-                    location.z(),
-                    (float) Math.toRadians(location.yaw()),
-                    tag
-            ));
-        });
-
         trackData.getTriggers().forEach((trigger, tags) -> {
             if (trigger instanceof io.gitlab.icestom.stomtrack.TrackTrigger.LineTrigger(io.gitlab.icestom.stomtrack.type.Vec2 a, io.gitlab.icestom.stomtrack.type.Vec2 b, double y, double height)) {
                 track.addFeature(new LineTrigger(a.x(), a.y(), b.x(), b.y(), y, height, tags));
@@ -183,7 +173,7 @@ public class Track {
                     location.x(),
                     location.y(),
                     location.z(),
-                    (float) Math.toRadians(location.y()),
+                    (float) Math.toRadians(location.yaw()),
                     tag
             ));
         });
@@ -274,7 +264,7 @@ public class Track {
 
             @Override
             public @NotNull List<OBUSettingsPacket> getOpenBoatUtils() {
-                return List.of();
+                return obuSettingsPackets;
             }
 
             @Override
