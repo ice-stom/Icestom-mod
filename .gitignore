@@ -2,3 +2,6 @@
 /.idea
 /build
 /run
+
+/export-worker/build
+/export-worker/.gradle

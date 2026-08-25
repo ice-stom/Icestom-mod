@@ -10,7 +10,7 @@ public interface ArgumentFetcher<T> {
     static <T> T getOptionalArgument(CommandContext<FabricClientCommandSource> context, String argument, ArgumentFetcher<T> fetcher, T fallback) {
         try {
             return fetcher.fetch(context, argument);
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException unused) {
             return fallback;
         }
     }

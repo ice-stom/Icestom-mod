@@ -30,6 +30,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.server.IntegratedServer;
@@ -136,9 +137,17 @@ public class IceStomModClient implements ClientModInitializer {
 
                             try (InputStream is = new FileInputStream(file)) {
                                 TrackFile trackFile = TrackLoader.loadTrack(is);
+
+                                if (trackFile == null) {
+                                    throw new RuntimeException("Track failed to load");
+                                }
+
                                 this.trackHandler.loadTrack(Track.fromTrackData(trackFile));
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
+                            } catch (RuntimeException | IOException e) {
+                                Minecraft.getInstance().execute(() -> {
+                                    Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Failed to load " + file.getName()).withStyle(ChatFormatting.RED));
+                                    Minecraft.getInstance().gui.getChat().addMessage(Component.literal(e.toString()).withStyle(ChatFormatting.RED));
+                                });
                             }
                         }
                     }

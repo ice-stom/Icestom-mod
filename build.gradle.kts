@@ -1,5 +1,6 @@
 plugins {
 	id("net.fabricmc.fabric-loom-remap")
+	id("com.gradleup.shadow") version("9.4.3")
 }
 
 version = property("mod_version") as String
@@ -21,7 +22,7 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
-	implementation("io.gitlab.icestom:stomtrack:0.0.21")
+	implementation("io.gitlab.icestom:stomtrack:0.0.24")
 
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
 
@@ -31,7 +32,26 @@ dependencies {
 tasks {
 	java {
 		sourceCompatibility = JavaVersion.VERSION_25
-		targetCompatibility = JavaVersion.VERSION_21
+		targetCompatibility = JavaVersion.VERSION_25
+	}
+
+	named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+		isZip64 = true
+		archiveClassifier.set("dev")
+		dependencies {
+			include(dependency("io.gitlab.icestom:.*"))
+		}
+	}
+
+	named("remapJar") {
+		dependsOn("shadowJar")
+	}
+
+	withType<net.fabricmc.loom.task.RemapJarTask>().configureEach {
+		if (name == "remapJar") {
+			inputFile.set(named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar").flatMap { it.archiveFile })
+			archiveClassifier.set("")
+		}
 	}
 
 	processResources {
@@ -49,13 +69,13 @@ tasks {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-	options.release.set(25)
+	options.release.set(21)
 }
 
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 tasks.jar {

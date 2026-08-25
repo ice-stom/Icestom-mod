@@ -58,7 +58,7 @@ public class TrackHandler {
                     TrackLoader.saveTrack(stream, new MutableTrackFile(trackFile));
                 }
 
-            } catch (IOException _) {
+            } catch (IOException unused) {
             }
         }
 

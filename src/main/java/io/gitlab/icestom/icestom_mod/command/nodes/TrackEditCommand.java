@@ -66,7 +66,7 @@ public class TrackEditCommand implements CommandNodeProvider {
         return literal(literal)
                 .executes(command)
                 .then(argument("index", IntegerArgumentType.integer(0))
-                        .suggests((_, builder) -> {
+                        .suggests((unused, builder) -> {
                             if (builder.getRemainingLowerCase().isEmpty()) builder.suggest(0);
                             return builder.buildFuture();
                         })
@@ -81,7 +81,7 @@ public class TrackEditCommand implements CommandNodeProvider {
         return literal(literal)
 //                .executes(command)
                 .then(argument("tags", NoLeadingDashArgumentType.wrap(StringSetArgumentType.stringSet(1)))
-                        .suggests((_, builder) -> {
+                        .suggests((unused, builder) -> {
                             if (builder.getRemainingLowerCase().isEmpty()) builder.suggest("<tag>");
                             return builder.buildFuture();
                         })
@@ -95,7 +95,7 @@ public class TrackEditCommand implements CommandNodeProvider {
     private <F extends Enum<F>> LiteralArgumentBuilder<FabricClientCommandSource> genericRequiredTagTree(String literal, Class<F> flags, Command<FabricClientCommandSource> command) {
         return literal(literal)
                 .then(argument("tag", NoLeadingDashArgumentType.wrap(StringArgumentType.greedyString()))
-                        .suggests((_, builder) -> {
+                        .suggests((unused, builder) -> {
                             if (builder.getRemainingLowerCase().isEmpty()) builder.suggest("<tag>");
                             return builder.buildFuture();
                         })
