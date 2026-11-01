@@ -14,6 +14,15 @@ repositories {
 			includeGroup("me.djtheredstoner")
 		}
 	}
+
+	exclusiveContent {
+		forRepository {
+			maven( "https://api.modrinth.com/maven")
+		}
+		filter {
+			includeGroup("maven.modrinth")
+		}
+	}
 }
 
 dependencies {
@@ -23,10 +32,13 @@ dependencies {
 	modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
 
 	implementation("io.gitlab.icestom:stomtrack:0.0.24")
+	implementation("io.gitlab.icestom:protocol:0.0.1")
 
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
 
 	runtimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
+
+	modImplementation("maven.modrinth:openboatutils:0.5.1c+1.21.9-1.21.11")
 }
 
 tasks {
@@ -35,15 +47,16 @@ tasks {
 		targetCompatibility = JavaVersion.VERSION_25
 	}
 
-	named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+	shadowJar {
 		isZip64 = true
 		archiveClassifier.set("dev")
 		dependencies {
 			include(dependency("io.gitlab.icestom:.*"))
+			exclude(dependency("maven.modrinth:openboatutils:0.5.1c+1.21.9-1.21.11"))
 		}
 	}
 
-	named("remapJar") {
+	remapJar {
 		dependsOn("shadowJar")
 	}
 

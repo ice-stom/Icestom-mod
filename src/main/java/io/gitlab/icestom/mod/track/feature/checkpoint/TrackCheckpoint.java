@@ -1,0 +1,10 @@
+package io.gitlab.icestom.mod.track.feature.checkpoint;
+
+import io.gitlab.icestom.mod.track.feature.IndexedFeature;
+
+public interface TrackCheckpoint<EncodedType extends io.gitlab.icestom.stomtrack.TrackCheckpoint> extends IndexedFeature {
+    void setIndex(int index);
+    int getIndex();
+
+    EncodedType toEncoded();
+}

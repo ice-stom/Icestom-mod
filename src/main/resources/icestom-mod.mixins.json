@@ -1,14 +1,17 @@
 {
   "required": true,
-  "package": "io.gitlab.icestom.icestom_mod.mixin",
+  "package": "io.gitlab.icestom.mod.mixin",
   "compatibilityLevel": "JAVA_21",
+  "plugin": "io.gitlab.icestom.mod.IcestomMixinPlugin",
   "client": [
     "EditWorldScreenMixin",
     "GameRendererMixin",
     "MouseMixin",
     "ScrollWheelHandlerMixin"
   ],
-  "mixins": [],
+  "mixins": [
+    "openboatutils.OpenBoatUtilsCompat"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "icestom-mod",
+	"id": "icestom",
 	"version": "${version}",
 	"name": "Icestom Mod",
 	"description": "This is an example description! Tell everyone what your mod is about!",
@@ -11,15 +11,15 @@
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "CC0-1.0",
-	"icon": "assets/icestom-mod/icon.png",
+	"license": "MIT",
+	"icon": "assets/icestom/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"io.gitlab.icestom.icestom_mod.IceStomMod"
+			"io.gitlab.icestom.mod.IceStomMod"
 		],
 		"client": [
-          "io.gitlab.icestom.icestom_mod.IceStomModClient"
+          	"io.gitlab.icestom.mod.IceStomModClient"
 		]
 	},
 	"mixins": [
