@@ -80,6 +80,10 @@ public class Track {
         return feature;
     }
 
+    public TrackRenderStateProvider getRenderState() {
+        return renderState;
+    }
+
     public void updateRenderState() {
 
         this.getFeatures().forEach((trackFeature) -> {
@@ -111,7 +115,7 @@ public class Track {
 
             FeatureLabelRenderer.FeatureRenderable renderState = feature.getRenderState(index++);
 
-            this.renderState.featureRenderable.add(renderState);
+            if (active) this.renderState.featureRenderable.add(renderState);
 
             if (feature instanceof TrackCheckpoint<?> checkpoint) {
                 SpawnLocation spawnLocation = (SpawnLocation) features.stream().filter(trackFeature -> trackFeature instanceof SpawnLocation).findFirst().get();
@@ -132,7 +136,7 @@ public class Track {
                     }
                 }
 
-                this.renderState.tetherRenderables.add(
+                if (active) this.renderState.tetherRenderables.add(
                         new LineSegmentRenderableRecord(
                                 "icestom.reset",
                                 renderState.x(),
@@ -164,7 +168,7 @@ public class Track {
 
                         for (String location : lookFor) {
                             locations.computeIfPresent(location, (ignored, vec) -> {
-                                this.renderState.tetherRenderables.add(
+                                if (active) this.renderState.tetherRenderables.add(
                                         new LineSegmentRenderableRecord(
                                                 tag,
                                                 renderState.x(),

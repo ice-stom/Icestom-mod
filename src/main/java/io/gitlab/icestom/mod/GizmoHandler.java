@@ -7,10 +7,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class GizmoHandler {
@@ -401,5 +404,9 @@ public class GizmoHandler {
                 this.gizmo.setZ(pos.z);
             }
         }
+    }
+
+    public interface GizmoHolder {
+        @NotNull Stream<Gizmo> getGizmos();
     }
 }

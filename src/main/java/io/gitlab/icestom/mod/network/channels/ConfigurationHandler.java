@@ -47,7 +47,12 @@ public class ConfigurationHandler implements ProtoChannel.ServerHandler, ProtoCh
                             .addFeatures(ClientHello.Feature.newBuilder()
                                     .setKey(Identifier.fromNamespaceAndPath(IceStomMod.MOD_ID, "timetrial").toString())
                                     .setVersion(1)
+                                    .build())
+                            .addFeatures(ClientHello.Feature.newBuilder()
+                                    .setKey(Identifier.fromNamespaceAndPath(IceStomMod.MOD_ID, "track").toString())
+                                    .setVersion(1)
                                     .build()))
+
                     .build());
         }
     }

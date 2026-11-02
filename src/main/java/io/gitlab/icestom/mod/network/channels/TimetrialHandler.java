@@ -34,7 +34,7 @@ public class TimetrialHandler implements ProtoChannel.ServerHandler, ProtoChanne
             ServerPBLine pbline = clientboundTimetrial.getPbLine();
 
             Minecraft.getInstance().doRunTask(() -> {
-                ByteArrayInputStream stream = new ByteArrayInputStream(pbline.getLine().getData().toByteArray());
+                ByteArrayInputStream stream = new ByteArrayInputStream(pbline.getLine().toByteArray());
 
                 List<PathRenderer.PathPoint> points = new ArrayList<>();
 

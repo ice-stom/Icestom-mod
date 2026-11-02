@@ -2,11 +2,9 @@ package io.gitlab.icestom.mod;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import io.gitlab.icestom.mod.command.nodes.TrackEditCommand;
-import io.gitlab.icestom.mod.network.channels.ConfigurationHandler;
 import io.gitlab.icestom.mod.render.hud.editor.TrackEditor;
 import io.gitlab.icestom.mod.render.pipeline.IcestomRenderPipeline;
 import io.gitlab.icestom.mod.render.renderers.*;
-// import io.gitlab.icestom.icestom_mod.track.EnvironmentFile;
 import io.gitlab.icestom.mod.render.renderers.generic.*;
 import io.gitlab.icestom.mod.track.Track;
 import io.gitlab.icestom.mod.track.TrackHandler;
@@ -94,6 +92,7 @@ public class IceStomModClient implements ClientModInitializer {
     public void onInitializeClient() {
         IceStomMod.CONFIGURATION.registerClientHandler();
         IceStomMod.TIMETRIAL.registerClientHandler();
+        IceStomMod.TRACK.registerClientHandler();
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             System.out.println("You left the server!");
