@@ -2,14 +2,12 @@ package io.gitlab.icestom.mod;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import io.gitlab.icestom.mod.command.nodes.TrackEditCommand;
+import io.gitlab.icestom.mod.network.channels.ConfigurationHandler;
 import io.gitlab.icestom.mod.render.hud.editor.TrackEditor;
 import io.gitlab.icestom.mod.render.pipeline.IcestomRenderPipeline;
 import io.gitlab.icestom.mod.render.renderers.*;
 // import io.gitlab.icestom.icestom_mod.track.EnvironmentFile;
-import io.gitlab.icestom.mod.render.renderers.generic.BoatLocationRenderer;
-import io.gitlab.icestom.mod.render.renderers.generic.CuboidFeatureRenderer;
-import io.gitlab.icestom.mod.render.renderers.generic.LineFeatureRenderer;
-import io.gitlab.icestom.mod.render.renderers.generic.LineSegmentRenderer;
+import io.gitlab.icestom.mod.render.renderers.generic.*;
 import io.gitlab.icestom.mod.track.Track;
 import io.gitlab.icestom.mod.track.TrackHandler;
 import io.gitlab.icestom.stomtrack.TrackFile;
@@ -73,6 +71,8 @@ public class IceStomModClient implements ClientModInitializer {
     public final BoatLocationRenderer<BoatLocationRenderer.BoatLocationRenderable> boatLocationRenderer = this.registerPipeline(new BoatLocationRenderer<>());
     public final LineSegmentRenderer<LineSegmentRenderer.LineSegmentRenderable> tetherRenderer = this.registerPipeline(new LineSegmentRenderer<>());
 
+    public final PathRenderer<PathRenderer.PathPoint> pbRenderer = this.registerPipeline(new PathRenderer<>());
+
     public final GizmoHandler gizmoHandler = new GizmoHandler();
     public final TrackHandler trackHandler = new TrackHandler();
 
@@ -93,6 +93,11 @@ public class IceStomModClient implements ClientModInitializer {
 
     public void onInitializeClient() {
         IceStomMod.CONFIGURATION.registerClientHandler();
+        IceStomMod.TIMETRIAL.registerClientHandler();
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            System.out.println("You left the server!");
+        });
 
         WorldRenderEvents.END_MAIN.register(context -> {
             FeatureLabelRenderer.setShowDetails(EDITOR_DETAILS.isDown());
@@ -107,7 +112,7 @@ public class IceStomModClient implements ClientModInitializer {
         WorldRenderEvents.START_MAIN.register(
                 context -> this.gizmoHandler.tick(context.gameRenderer().getMainCamera().getPartialTickTime()));
 
-       HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, IceStomMod.id("track_editor"), trackEditor);
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, IceStomMod.id("track_editor"), trackEditor);
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             if (!client.hasSingleplayerServer()) return;

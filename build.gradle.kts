@@ -33,6 +33,7 @@ dependencies {
 
 	implementation("io.gitlab.icestom:stomtrack:0.0.24")
 	implementation("io.gitlab.icestom:protocol:0.0.1")
+	implementation("io.gitlab.icestom:linefold:0.0.1")
 
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_api_version")}")
 

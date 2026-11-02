@@ -18,8 +18,6 @@ public class ConfigurationHandler implements ProtoChannel.ServerHandler, ProtoCh
 
     private static final Logger log = LoggerFactory.getLogger(ConfigurationHandler.class);
 
-    private boolean handshaken = false;
-
     @Override
     public void handleClientbound(ProtoChannel.BytePayload payload, ProtoChannel.ClientContext context) {
 
@@ -31,41 +29,31 @@ public class ConfigurationHandler implements ProtoChannel.ServerHandler, ProtoCh
             return;
         }
 
-        if (!handshaken) {
-            if (clientboundConfiguration.hasHello()) {
-                ServerHello hello = clientboundConfiguration.getHello();
+        if (clientboundConfiguration.hasHello()) {
+            ServerHello hello = clientboundConfiguration.getHello();
 
-                int spec = hello.getSpec();
+            int spec = hello.getSpec();
 
-                if (spec != SPEC) {
-                    log.warn("Unexpected spec number {}", spec);
-                    return;
-                }
-
-                IceStomMod.CONFIGURATION.sendPacketC2S(ServerboundConfiguration.newBuilder()
-                        .setHello(ClientHello.newBuilder()
-                                .setNamespace(NAMESPACE)
-                                .setVersion(IceStomMod.VERSION.getFriendlyString())
-                                .setUnstable(IceStomMod.UNSTABLE)
-                                .addFeatures(ClientHello.Feature.newBuilder()
-                                        .setKey(Identifier.fromNamespaceAndPath(IceStomMod.MOD_ID, "playback").toString())
-                                        .setVersion(1)
-                                        .build()))
-                        .build());
-
-                handshaken = true;
-            } else {
+            if (spec != SPEC) {
+                log.warn("Unexpected spec number {}", spec);
                 return;
             }
+
+            IceStomMod.CONFIGURATION.sendPacketC2S(ServerboundConfiguration.newBuilder()
+                    .setHello(ClientHello.newBuilder()
+                            .setNamespace(NAMESPACE)
+                            .setVersion(IceStomMod.VERSION.getFriendlyString())
+                            .setUnstable(IceStomMod.UNSTABLE)
+                            .addFeatures(ClientHello.Feature.newBuilder()
+                                    .setKey(Identifier.fromNamespaceAndPath(IceStomMod.MOD_ID, "timetrial").toString())
+                                    .setVersion(1)
+                                    .build()))
+                    .build());
         }
     }
 
     @Override
     public void handleServerbound(ProtoChannel.BytePayload payload, ProtoChannel.ServerContext context) {
 
-    }
-
-    public boolean hasHandshaken() {
-        return handshaken;
     }
 }

@@ -95,7 +95,7 @@ public abstract class IcestomRenderPipeline<RenderState> {
         GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
                 .writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, MODEL_OFFSET, TEXTURE_MATRIX);
         RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
-                () -> "icestom_mod example render pipeline rendering",
+                () -> "icestom_mod render pipeline",
                 client.getMainRenderTarget().getColorTextureView(), OptionalInt.empty(),
                 client.getMainRenderTarget().getDepthTextureView(), OptionalDouble.empty());
 

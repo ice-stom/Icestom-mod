@@ -54,7 +54,7 @@ public abstract class FilledCuboidPipeline<RenderState> extends IcestomRenderPip
                 this.vertexBuffer.close();
             }
 
-            this.vertexBuffer = new MappableRingBuffer(() -> "icestom_mod example render pipeline", 34,
+            this.vertexBuffer = new MappableRingBuffer(() -> "icestom_mod filled cuboid pipeline", 34,
                     vertexBufferSize);
         }
 
